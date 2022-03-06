@@ -103,6 +103,7 @@
     <Compile Include="Responses\ErrorResponse.cs" />
     <Compile Include="Responses\YandexSystemFoldersResponsePart.cs" />
     <Compile Include="Responses\YandexUserResponsePart.cs" />
+    <Compile Include="Utils\EWXYandexSyncronizer.cs" />
     <Compile Include="Utils\TLAdmin.cs" />
   </ItemGroup>
   <ItemGroup>

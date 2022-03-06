@@ -31,6 +31,8 @@ namespace me.ewerestr.ewxtelegrambot
 											"EWXTelegramBot";
 		private static Dictionary<string, string> _translit = new Dictionary<string, string>();
 		private const int _build = 0101;
+		private const string _telegramApi = "https://api.telegram.org/bot";
+		private const string _yandexApi = "https://cloud-api.yandex.net/v1/";
 
 		// entry block
 		static void Main(string[] args)
@@ -432,6 +434,16 @@ namespace me.ewerestr.ewxtelegrambot
 		}
 
 		// get/set block
+		public static string GetYandexAPI()
+		{
+			return _yandexApi;
+		}
+
+		public static string GetTelegramAPI()
+		{
+			return _telegramApi;
+		}
+
 		public static void SetDebugStatus(bool debug)
         {
 			_debug = debug;
