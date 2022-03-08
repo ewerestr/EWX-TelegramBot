@@ -24,8 +24,7 @@ namespace me.ewerestr.ewxtelegrambot.Utils
             _yandexToken = yandexToken;
             ScanHierarchy();
             GetSubfolders("disk:/EWXTelegramBot");
-            if (_subfolders.Count > 0) ScanSubfolders(); // add else statement
-            if (_images.Count > 0 || _audios.Count > 0) DownloadAll(); // add else statement and may be separate images and audios
+            // Checking for existance in localfolder
         }
 
         private void ScanHierarchy()
