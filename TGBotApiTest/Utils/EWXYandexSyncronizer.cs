@@ -15,6 +15,7 @@ namespace me.ewerestr.ewxtelegrambot.Utils
         private List<string> _subfolders = new List<string>();
         private List<string> _images = new List<string>();
         private List<string> _audios = new List<string>();
+        private EWXLocalData _localData;
         private string _yandexToken = null;
 
         // constructor
