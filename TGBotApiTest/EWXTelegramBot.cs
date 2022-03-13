@@ -20,9 +20,8 @@ namespace me.ewerestr.ewxtelegrambot
 		private static Thread _commandhandlerThread;
 		private static EWXLogger _logger;
 		private static EWXCommandHandler _commandHandler;
-		//private static EWXTelegramInstance _telegramInstance;
-		//private static EWXTelegramLongPoll _telegramLongpoll;
-		//private static EWXYandexInstance _yandexInstance;
+		private static TimerCallback _timerCallback;
+		private static Timer _timer;
 		private static EWXController _controller;
 		private static bool _allowLogger = true;
 		private static bool _debug = true;
@@ -30,7 +29,6 @@ namespace me.ewerestr.ewxtelegrambot
 		private static string _datafolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) +
 											Path.DirectorySeparatorChar +
 											"EWXTelegramBot";
-		private static Dictionary<string, string> _translit = new Dictionary<string, string>();
 		private const int _build = 0101;
 		private const string _telegramApi = "https://api.telegram.org/bot";
 		private const string _yandexApi = "https://cloud-api.yandex.net/v1/";
@@ -149,11 +147,7 @@ namespace me.ewerestr.ewxtelegrambot
 			}
 			catch (Exception e)
 			{
-				_controller.SendMessage("An error occured at EWXTelegramBot.StopAll()" + Environment.NewLine + "See last log to get more details");
-				Console.WriteLine("An error occured at EWXTelegramBot.StopAll()" + Environment.NewLine + "See last log to get more details");
-				PrintService("[WARN] Class:EWXTelegramBot Method:StopAll IncomingParams:none");
-				PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-				PrintService("[WARN] StackTrace: " + e.StackTrace);
+				StackTrace("EWXTelegramBot", "StopAll", e.GetType().ToString(), e.Message, e.StackTrace);
 				Console.WriteLine("\n\nPress any key to close");
 				Console.ReadKey();
 				Console.WriteLine("\nSure? Press any key again to confirm");
@@ -184,11 +178,7 @@ namespace me.ewerestr.ewxtelegrambot
 			}
 			catch (Exception e)
 			{
-				_controller.SendMessage("An error occured at EWXTelegramBot.SaveAll()" + Environment.NewLine + "See last log to get more details");
-				Console.WriteLine("An error occured at EWXTelegramBot.SaveAll()" + Environment.NewLine + "See last log to get more details");
-				PrintService("[WARN] Class:EWXTelegramBot Method:SaveAll IncomingParams:none");
-				PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-				PrintService("[WARN] StackTrace: " + e.StackTrace);
+				StackTrace("EWXTelegramBot", "SaveAll", e.GetType().ToString(), e.Message, e.StackTrace);
 			}
 		}
 
@@ -199,7 +189,7 @@ namespace me.ewerestr.ewxtelegrambot
 				if (File.Exists(_datafolder + Path.DirectorySeparatorChar + "localdataholder.ewx")) File.Delete(_datafolder + Path.DirectorySeparatorChar + "localdataholder.ewx");
 				using (FileStream fs = new FileStream(_datafolder + Path.DirectorySeparatorChar + "localdataholder.ewx", FileMode.OpenOrCreate))
 				{
-					byte[] array = System.Text.Encoding.Default.GetBytes(JsonSerializer.Serialize(ld));
+					byte[] array = Encoding.Default.GetBytes(JsonSerializer.Serialize(ld));
 					fs.Write(array, 0, array.Length);
 					fs.Close();
 				}
@@ -207,54 +197,69 @@ namespace me.ewerestr.ewxtelegrambot
 			}
 			catch (Exception e)
             {
-				_controller.SendMessage("An error occured at EWXTelegramBot.SaveLocalData()" + Environment.NewLine + "See last log to get more details");
-				Console.WriteLine("An error occured at EWXTelegramBot.SaveLocalData()" + Environment.NewLine + "See last log to get more details");
-				PrintService("[WARN] Class:EWXTelegramBot Method:SaveLocalData IncomingParams:EWXLocalData");
-				PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-				PrintService("[WARN] StackTrace: " + e.StackTrace);
+				StackTrace("EWXTelegramBot", "SaveLocalData", e.GetType().ToString(), e.Message, e.StackTrace, "EWXLocalData");
 			}
 			return false;
         }
 
-		/* UNUSED CODE
-		public static long ParseCooldown(string value)
+		public static void StartTimer(DateTime nextPostDate)
+        {
+			TimeSpan difference = nextPostDate.Subtract(DateTime.Now);
+			_timerCallback = new TimerCallback(RestartTimer);
+			_timer = new Timer(_timerCallback, 0, (long)difference.TotalMilliseconds, 1000);
+		}
+
+		private static void RestartTimer(object obj)
+        {
+			DateTime nextPostDate = _controller.GetNextPostDate();
+			_controller.Post();
+			int[] interval = _controller._postInterval;
+			nextPostDate = nextPostDate.AddDays(interval[0]).AddHours(interval[1]).AddMinutes(interval[2]).AddSeconds(interval[3]);
+			_controller._postInterval = new int[] {nextPostDate.Year, nextPostDate.Month, nextPostDate.Day, nextPostDate.Hour, nextPostDate.Minute, nextPostDate.Second};
+			StartTimer(nextPostDate);
+        }
+
+		public static int[] ParseCooldown(string value)
 		{
-			long lReturn = 0;
-			int s = 0;
-			int m = 0;
-			int h = 0;
-			int d = 0;
-			int t = 0;
-			int p;
-			string lValue = value.ToLower() + "0";
-			string[] lArray = lValue.Replace("d", "#").Replace("h", "#").Replace("m", "#").Replace("s", "#").Split('#');
-			for (int i = 0; i < lArray.Length - 1; i++)
-			{
-				t += lArray[i].Length;
-				switch (value[t])
+			int[] lReturn = {-1,-1,-1,-1};
+            try
+            {
+				int s = 0;
+				int m = 0;
+				int h = 0;
+				int d = 0;
+				int t = 0;
+				int p;
+				string lValue = value.ToLower() + "0";
+				string[] lArray = lValue.Replace("d", "#").Replace("h", "#").Replace("m", "#").Replace("s", "#").Split('#');
+				for (int i = 0; i < lArray.Length - 1; i++)
 				{
-					case 'd':
-						if (Int32.TryParse(lArray[i], out p)) d = p;
-						break;
-					case 'h':
-						if (Int32.TryParse(lArray[i], out p)) h = p;
-						break;
-					case 'm':
-						if (Int32.TryParse(lArray[i], out p)) m = p;
-						break;
-					case 's':
-						if (Int32.TryParse(lArray[i], out p)) s = p;
-						break;
+					t += lArray[i].Length;
+					switch (value[t])
+					{
+						case 'd':
+							if (Int32.TryParse(lArray[i], out p)) d = p;
+							break;
+						case 'h':
+							if (Int32.TryParse(lArray[i], out p)) h = p;
+							break;
+						case 'm':
+							if (Int32.TryParse(lArray[i], out p)) m = p;
+							break;
+						case 's':
+							if (Int32.TryParse(lArray[i], out p)) s = p;
+							break;
+					}
+					t++;
 				}
-				t++;
+				lReturn = new int[] { d, h, m, s };				
 			}
-			if (d > 0) lReturn += d * 86400;
-			if (h > 0) lReturn += h * 3600;
-			if (m > 0) lReturn += m * 60;
-			if (s > 0) lReturn += s;
+			catch (Exception e)
+            {
+				StackTrace("EWXTelegramBot", "ParseCooldown", e.GetType().ToString(), e.Message, e.StackTrace, ("value=" + value));
+			}
 			return lReturn;
-		} 
-		*/
+		}
 
 		public static bool RestartLogger()
         {
@@ -282,11 +287,7 @@ namespace me.ewerestr.ewxtelegrambot
 			}
 			catch (Exception e)
 			{
-				_controller.SendMessage("An error occured at EWXTelegramBot.RestartLogger()" + Environment.NewLine + "See last log to get more details");
-				Console.WriteLine("An error occured at EWXTelegramBot.RestartLogger()" + Environment.NewLine + "See last log to get more details");
-				PrintService("[WARN] Class:EWXTelegramBot Method:RestartLogger IncomingParams:none");
-				PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-				PrintService("[WARN] StackTrace: " + e.StackTrace);
+				StackTrace("EWXTelegramBot", "RestartLogger", e.GetType().ToString(), e.Message, e.StackTrace);
 			}
 			return false;
         }
@@ -336,38 +337,18 @@ namespace me.ewerestr.ewxtelegrambot
 			}
 			catch (Exception e)
             {
-				_controller.SendMessage("An error occured at EWXTelegramBot.Erase()" + Environment.NewLine + "See last log to get more details");
-				Console.WriteLine("An error occured at EWXTelegramBot.Erase()" + Environment.NewLine + "See last log to get more details");
-				PrintService("[WARN] Class:EWXTelegramBot Method:Erase IncomingParams:byte>level=" + level);
-				PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-				PrintService("[WARN] StackTrace: " + e.StackTrace);
+				StackTrace("EWXTelegramBot", "Erase", e.GetType().ToString(), e.Message, e.StackTrace, ("byte>level=" + level));
 			}
         }
 
-		public static string Transliterate(string source)
-		{
-			try
-			{
-				string output = source;
-				foreach (string key in _translit.Keys) output = output.Replace(key, _translit[key]);
-				return output;
-			}
-			catch (Exception e)
-			{
-				_controller.SendMessage("An error occured at EWXTelegramBot.Transliterate()" + Environment.NewLine + "See last log to get more details");
-				Console.WriteLine("An error occured at EWXTelegramBot.Transliterate()" + Environment.NewLine + "See last log to get more details");
-				PrintService("[WARN] Class:EWXTelegramBot Method:Transliterate IncomingParams:source=\"" + source + "\"");
-				PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-				PrintService("[WARN] StackTrace: " + e.StackTrace);
-			}
-			return source;
-		}
-
-		public static bool HasCyrillic(string source)
+		public static void StackTrace(string errorClass, string errorMethod, string errorExceptionType, string errorMessage, string errorStacktrace, string methodParams = "none")
         {
-			foreach (char c in source) if (_translit.ContainsKey(c.ToString())) return true;
-			return false;
-        }
+			_controller.SendMessage("An error occured at " + errorClass + "." + errorMethod + "()" + Environment.NewLine + "See last log to get more details");
+			Console.WriteLine("An error occured at " + errorClass + "." + errorMethod + "()" + Environment.NewLine + "See last log to get more details");
+			PrintService("[WARN] Class:" + errorClass + " Method:" + errorMethod + " IncomingParams:" + methodParams);
+			PrintService("[WARN] Exception: " + errorExceptionType + "; Message: " + errorMessage);
+			PrintService("[WARN] StackTrace: " + errorStacktrace);
+		}
 
 		public static long GetCurrentTimeMillis()
 		{

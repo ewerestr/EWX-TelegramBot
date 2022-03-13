@@ -12,7 +12,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
         private int _cooldown;
         private Thread t_logger;
 
-        public EWXLogger(bool restart = false, int saveCooldown = 300)
+        public EWXLogger(bool restart = false, int saveCooldown = 100)
         {
             string lString = DateTime.Now.ToString("G").Replace(".", "-").Replace(" ", "_").Replace(":", "-");
             _path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + Path.DirectorySeparatorChar + "EWXTelegramBot" + Path.DirectorySeparatorChar + "logs" + Path.DirectorySeparatorChar + "log_" + lString + ".ewx";

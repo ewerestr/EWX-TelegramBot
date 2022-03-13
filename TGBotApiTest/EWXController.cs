@@ -17,51 +17,48 @@ namespace me.ewerestr.ewxtelegrambot
     {
         // vars block
         [JsonIgnore]
-        private EWXComponentStatus _status = EWXComponentStatus.WarmingUp;                             // common
+        private EWXComponentStatus _status = EWXComponentStatus.WarmingUp;                  // common
 
         [JsonIgnore]
-        private Thread _controllerThread;
-        [JsonIgnore]// controller
-        private Thread _longpollThread;                                 // longpoll
+        private Thread _controllerThread;                                                   // controller
+        [JsonIgnore]
+        private Thread _longpollThread;                                                     // longpoll
 
-        public bool _postAgain { get; set; } = false;                              // controller
-        public bool _allowController { get; set; } = false;                          // controller
-        public bool _allowLongpoll { get; set; } = false;                            // longpoll
-        //private bool _saveAfterPost = true;                             // controller
+        public bool _postAgain { get; set; } = false;                                       // controller
+        public bool _allowController { get; set; } = false;                                 // controller
+        public bool _allowLongpoll { get; set; } = false;                                   // longpoll
+        //private bool _saveAfterPost = true;                                               // controller
         //private bool _serviceBool = false;
 
-        public int _refreshCooldown { get; set; } = 15;                              // controller
-        public int _deviation { get; set; } = 1;                                         // controller   / need to make def value
-        public int _timeout { get; set; } = 5;                                       // refresh delay (seconds)  ::  longpolltimeout
+        public int _refreshCooldown { get; set; } = 15;                                     // controller
+        public int _deviation { get; set; } = 1;                                            // controller   / need to make def value
+        public int _timeout { get; set; } = 5;                                              // refresh delay (seconds)  ::  longpolltimeout
         [JsonIgnore]
-        private int _invites = 0;                                       // longpoll
+        private int _invites = 0;                                                           // longpoll
         public int _secretLength { get; set; } = 32;
         public int _syncCooldown { get; set; } = 60;
+        public int[] _nextPostDate { get; set; } = { DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.AddDays(1).Day, DateTime.Now.Hour, DateTime.Now.Minute };
+        public int[] _postInterval { get; set; } = { 1, 0, 0, 0 }; // d, h, m, s
 
-        public long _offset { get; set; } = 0;                                       // longpoll
-        public long _lastSync { get; set; } = 0;                                     // yandex
+        public long _offset { get; set; } = 0;                                              // longpoll
+        public long _lastSync { get; set; } = 0;                                            // yandex
 
-        public string _lastPostDate { get; set; } = "neverbefore";                   // controller
-        public string _telegramToken { get; set; }                                  // tg ins
-        public string _myself { get; set; }                                         // tg longpoll
-        public string _secret { get; set; } = null;                                  // longpoll
-        public string _channelSecret { get; set; } = null;                           // longpoll
+        //public string _lastPostDate { get; set; } = "neverbefore";                          // controller //// WILL BE DELETED
+        public string _telegramToken { get; set; }                                          // tg ins
+        public string _myself { get; set; }                                                 // tg longpoll
+        public string _secret { get; set; } = null;                                         // longpoll
+        public string _channelSecret { get; set; } = null;                                  // longpoll
         [JsonIgnore]
-        private string _error;                                          // common
-        public string _yandexToken { get; set; }                                    //yandex
+        private string _error;                                                              // common
+        public string _yandexToken { get; set; }                                            //yandex
 
-        public byte[] _postTime { get; set; } = new byte[2] { 10, 0 };               // 0 - hours, 1 - minutes / controller
+        //public byte[] _postTime { get; set; } = new byte[2] { 10, 0 };                    // 0 - hours, 1 - minutes / controller /// WILL BE DELETED
 
-        public List<string> _telegramPeers { get; set; } = new List<string>();       // tg ins
-        public List<TLAdmin> _telegramAdmins { get; set; } = new List<TLAdmin>();      // tg longpoll
-        //private List<string> _postedAudios = new List<string>();        // controller
+        public List<string> _telegramPeers { get; set; } = new List<string>();              // tg ins
+        public List<TLAdmin> _telegramAdmins { get; set; } = new List<TLAdmin>();           // tg longpoll
+        //private List<string> _postedAudios = new List<string>();                          // controller
         [JsonIgnore]
         private EWXLocalData localdata;
-
-        [JsonIgnore]
-        private const string _yapi = "https://cloud-api.yandex.net/v1/";
-        [JsonIgnore]
-        private const string _tapi = "https://api.telegram.org/bot";
 
         // entry block
         public EWXController()
@@ -69,7 +66,7 @@ namespace me.ewerestr.ewxtelegrambot
             _status = EWXComponentStatus.WarmingUp;
             //init();
             //ScanLocalFolders();
-            EWXTelegramBot.PrintLine("Главный вичислительный модуль инициализирован. Подготовка к запуску...");
+            EWXTelegramBot.PrintLine("Главный вычислительный модуль инициализирован. Подготовка к запуску...");
         }
 
         // method block
@@ -92,23 +89,20 @@ namespace me.ewerestr.ewxtelegrambot
                 else localdata = new EWXLocalData();
                 if (CheckApplicationFolder()) SyncData();
                 else { /* Notify user */ }
-                EWXTelegramBot.PrintLine("Программа получила команду на запуск. Запуст главного вычислительного модуля...");
+                CheckTime();
+                EWXTelegramBot.PrintLine("Программа получила команду на запуск. Запуск главного вычислительного модуля...");
                 _allowController = true;
                 _allowLongpoll = true;
                 _status = EWXComponentStatus.Working;
                 _longpollThread = new Thread(Longpoll);
-                _controllerThread = new Thread(Controller);
+                //_controllerThread = new Thread(Controller);   // LEGACY //// WILL BE DELETED
                 _longpollThread.Start();
                 _controllerThread.Start();
                 if (_telegramPeers.Count == 0) EWXTelegramBot.PrintLine("Внимание! Список получателей пуст. Добавьте получателей при помощи команд \"generatechannelsecret\" или \"setinvites <number>\"");
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.Start()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.Start()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:Start IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "Start", e.GetType().ToString(), e.Message, e.StackTrace);
             }
         }
 
@@ -127,16 +121,13 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.Stop()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.Stop()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:Stop IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "Stop", e.GetType().ToString(), e.Message, e.StackTrace);
             }
         }
 
         // controller
-        private void Controller()
+        /*
+        private void Controller() // DEP //// WILL BE DELETED
         {
             try
             {
@@ -161,13 +152,10 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.Controller()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.Controller()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:Controller IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "Controller", e.GetType().ToString(), e.Message, e.StackTrace);
             }
         }
+        */
 
         // longpoll
         private void Longpoll()
@@ -176,7 +164,7 @@ namespace me.ewerestr.ewxtelegrambot
             {
                 while (_allowLongpoll)
                 {
-                    string url = new EWXRequestBuilder(_tapi + _telegramToken)
+                    string url = new EWXRequestBuilder(EWXTelegramBot.GetTelegramAPI() + _telegramToken)
                         .SetMethod("getUpdates")
                         .AddParameter("timeout", _timeout.ToString())
                         .AddParameter("offset", _offset.ToString())
@@ -255,11 +243,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.Longpoll()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.Longpoll()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:Longpoll IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "Longpoll", e.GetType().ToString(), e.Message, e.StackTrace);
             }
         }
 
@@ -270,7 +254,7 @@ namespace me.ewerestr.ewxtelegrambot
             {
                 long q;
                 string lPeer = long.TryParse(peer, out q) ? peer : "@" + peer;
-                EWXRequestBuilder builder = new EWXRequestBuilder(_tapi + _telegramToken)
+                EWXRequestBuilder builder = new EWXRequestBuilder(EWXTelegramBot.GetTelegramAPI() + _telegramToken)
                     .SetMethod("sendMessage")
                     .AddParameter("chat_id", lPeer)
                     .AddParameter("text", HttpUtility.UrlEncode(text));
@@ -278,11 +262,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.SendMessage()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.SendMessage()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:SendMessage IncomingParams:peer=" + peer + " text=\""+ text + "\"");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "SendMessage", e.GetType().ToString(), e.Message, e.StackTrace, ("peer=" + peer + " text\"" + text + "\""));
             }
         }
 
@@ -292,7 +272,7 @@ namespace me.ewerestr.ewxtelegrambot
             {
                 foreach (TLAdmin a in _telegramAdmins)
                 {
-                    EWXRequestBuilder builder = new EWXRequestBuilder(_tapi + _telegramToken)
+                    EWXRequestBuilder builder = new EWXRequestBuilder(EWXTelegramBot.GetTelegramAPI() + _telegramToken)
                     .SetMethod("sendMessage")
                     .AddParameter("chat_id", a.id.ToString())
                     .AddParameter("text", HttpUtility.UrlEncode(text));
@@ -301,10 +281,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                Console.WriteLine("An error occured at EWXController.SendMessage()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:SendMessage IncomingParams:text=\"" + text + "\"");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "SendMessage", e.GetType().ToString(), e.Message, e.StackTrace, ("text=\"" + text + "\""));
             }
         }
 
@@ -322,7 +299,7 @@ namespace me.ewerestr.ewxtelegrambot
                 {
                     long q;
                     string lPeer = long.TryParse(peer, out q) ? peer : "@" + peer;
-                    EWXRequestBuilder builder = new EWXRequestBuilder(_tapi + _telegramToken)
+                    EWXRequestBuilder builder = new EWXRequestBuilder(EWXTelegramBot.GetTelegramAPI() + _telegramToken)
                         .SetMethod("sendPhoto")
                         .AddParameter("chat_id", lPeer)
                         .AddParameter("photo", string.Empty);
@@ -341,11 +318,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.SendImage()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.SendImage()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:SendImage IncomingParams:filePath=\"" + filePath + "\"");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "SendPhoto", e.GetType().ToString(), e.Message, e.StackTrace, ("filePath=\"" + filePath + "\""));
             }
         }
 
@@ -363,7 +336,7 @@ namespace me.ewerestr.ewxtelegrambot
                 {
                     long q;
                     string lPeer = long.TryParse(peer, out q) ? peer : "@" + peer;
-                    EWXRequestBuilder builder = new EWXRequestBuilder(_tapi + _telegramToken)
+                    EWXRequestBuilder builder = new EWXRequestBuilder(EWXTelegramBot.GetTelegramAPI() + _telegramToken)
                         .SetMethod("sendAudio")
                         .AddParameter("chat_id", lPeer)
                         .AddParameter("audio", string.Empty);
@@ -383,11 +356,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.SendAudio()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.SendAudio()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:SendAudio IncomingParams:filePath=\"" + filePath + "\"");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "SendAudio", e.GetType().ToString(), e.Message, e.StackTrace, ("filePath=\"" + filePath + "\""));
             }
         }
 
@@ -395,7 +364,7 @@ namespace me.ewerestr.ewxtelegrambot
         {
             try
             {
-                string url = new EWXRequestBuilder(_tapi + token)
+                string url = new EWXRequestBuilder(EWXTelegramBot.GetTelegramAPI() + token)
                 .SetMethod("getMe")
                 .BuildRequest();
                 TelegramGetMeResponse response = JsonSerializer.Deserialize<TelegramGetMeResponse>(EWXTelegramBot.SendRequest(url));
@@ -424,10 +393,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                Console.WriteLine("An error occured at EWXController.TestTelegramToken()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:TestTelegramToken IncomingParams:token=\"" + token + "\"");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "TestTelegramToken", e.GetType().ToString(), e.Message, e.StackTrace, ("token=\"" + token + "\""));
             }
             return null;
         }
@@ -437,7 +403,7 @@ namespace me.ewerestr.ewxtelegrambot
         {
             try
             {
-                YandexDiskResponse response = JsonSerializer.Deserialize<YandexDiskResponse>(EWXTelegramBot.SendRequest(new EWXRequestBuilder(_yapi).SetMethod("disk").BuildRequest(), token));
+                YandexDiskResponse response = JsonSerializer.Deserialize<YandexDiskResponse>(EWXTelegramBot.SendRequest(new EWXRequestBuilder(EWXTelegramBot.GetYandexAPI()).SetMethod("disk").BuildRequest(), token));
                 if (response.error == null && response.user.display_name != null)
                 {
                     EWXTelegramBot.PrintLine("Сохраненный ранее Yandex токен прошел валидацию");
@@ -451,11 +417,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.TestYandexToken()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.TestYandexToken()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:TestYandexToken IncomingParams:token=\"" + token + "\"");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "TestYandexToken", e.GetType().ToString(), e.Message, e.StackTrace, ("token=\"" + token + "\""));
             }
             return false;
         }
@@ -470,11 +432,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.AuthorizeYandex()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.AuthorizeYandex()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:AuthorizeYandex IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "AuthorizeYandex", e.GetType().ToString(), e.Message, e.StackTrace);
             }
         }
 
@@ -482,45 +440,27 @@ namespace me.ewerestr.ewxtelegrambot
         {
             try
             {
-                EWXYandexSyncronizer sync = new EWXYandexSyncronizer(_yandexToken);
-                /*
-                string url = new EWXRequestBuilder(_yapi)
+                string url = new EWXRequestBuilder(EWXTelegramBot.GetYandexAPI())
                 .SetMethod("disk/resources")
                 .AddParameter("path", "EWXTelegramBot")
                 .BuildRequest();
                 ErrorResponse response = JsonSerializer.Deserialize<ErrorResponse>(EWXTelegramBot.SendRequest(url, _yandexToken, "GET"));
                 if (response.error != null)
                 {
-                    url = new EWXRequestBuilder(_yapi)
+                    url = new EWXRequestBuilder(EWXTelegramBot.GetYandexAPI())
                         .SetMethod("disk/resources")
                         .AddParameter("path", "EWXTelegramBot")
                         .BuildRequest();
                     response = JsonSerializer.Deserialize<ErrorResponse>(EWXTelegramBot.SendRequest(url, _yandexToken, "PUT"));
                     if (response.error != null) EWXTelegramBot.PrintLine("Не удалось создать папку \"EWXTelegramBot\" в облаке Yandex. Описание ошибки >> " + response.description);
-                    url = new EWXRequestBuilder(_yapi)
-                        .SetMethod("disk/resources")
-                        .AddParameter("path", "EWXTelegramBot/images")
-                        .BuildRequest();
-                    response = JsonSerializer.Deserialize<ErrorResponse>(EWXTelegramBot.SendRequest(url, _yandexToken, "PUT"));
-                    if (response.error != null) EWXTelegramBot.PrintLine("Не удалось создать папку  \"EWXTelegramBot\\images\" в облаке Yandex. Описание ошибки >> " + response.description);
-                    url = new EWXRequestBuilder(_yapi)
-                        .SetMethod("disk/resources")
-                        .AddParameter("path", "EWXTelegramBot/audios")
-                        .BuildRequest();
-                    response = JsonSerializer.Deserialize<ErrorResponse>(EWXTelegramBot.SendRequest(url, _yandexToken, "PUT"));
-                    if (response.error != null) EWXTelegramBot.PrintLine("Не удалось создать папку  \"EWXTelegramBot\\audios\" в облаке Yandex. Описание ошибки >> " + response.description);
                     return false;
                 }
-                else EWXTelegramBot.PrintLine("Папка приложения найдена на облаке Yandex");*/
+                else EWXTelegramBot.PrintLine("Папка приложения найдена на облаке Yandex");
                 return true;
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.ChechApplicationFolder()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.CheckApplicationFolder()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:ChechApplicationFolder IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "CheckApplicationFolder", e.GetType().ToString(), e.Message, e.StackTrace);
             }
             return false;
         }
@@ -529,74 +469,13 @@ namespace me.ewerestr.ewxtelegrambot
         {
             try
             {
-                List<string> newPhotos = new List<string>();
-                List<string> newAudios = new List<string>();
-
-                string url = new EWXRequestBuilder(_yapi).SetMethod("disk/resources").AddParameter("path", "EWXTelegramBot/images").AddParameter("limit", "1000").BuildRequest();
-                YandexDiskResourcesGetResponse response = JsonSerializer.Deserialize<YandexDiskResourcesGetResponse>(EWXTelegramBot.SendRequest(url, _yandexToken, "GET"));
-                if (response.error == null)
-                {
-                    foreach (YandexDiskResourcesItem file in response._embedded.items)
-                    {
-                        string lString = file.name;
-                        if (EWXTelegramBot.HasCyrillic(lString)) lString = EWXTelegramBot.Transliterate(lString);
-                        if (localdata.ContainsImage(lString)) continue;
-                        else
-                        {
-                            newPhotos.Add(lString);
-                            url = new EWXRequestBuilder(_yapi).SetMethod("disk/resources/download").AddParameter("path", file.path).BuildRequest();
-                            YandexDiskResourceDownloadResponse downloadResponse = JsonSerializer.Deserialize<YandexDiskResourceDownloadResponse>(EWXTelegramBot.SendRequest(url, _yandexToken, "GET"));
-                            WebClient client = new WebClient();
-                            string filePath = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder" + Path.DirectorySeparatorChar + "images" + Path.DirectorySeparatorChar + lString;
-                            client.DownloadFile(downloadResponse.href, filePath);
-                            EWXTelegramBot.PrintLine("Файл " + lString + " загружен в локальное хранилище");
-                        }
-                    }
-                    if (newPhotos.Count > 0)
-                    {
-                        localdata.AddImages(newPhotos);
-                        EWXTelegramBot.PrintLine("Загружено " + newPhotos.Count + " новых изображений");
-                    }
-                    _lastSync = EWXTelegramBot.GetCurrentTimeMillis();
-                }
-                else EWXTelegramBot.PrintLine("Не удалось получить содержимое облака Yandex. Описание ошибки >> " + response.description);
-                url = new EWXRequestBuilder(_yapi).SetMethod("disk/resources").AddParameter("path", "EWXTelegramBot/audios").AddParameter("limit", "1000").BuildRequest();
-                response = JsonSerializer.Deserialize<YandexDiskResourcesGetResponse>(EWXTelegramBot.SendRequest(url, _yandexToken, "GET"));
-                if (response.error == null)
-                {
-                    foreach (YandexDiskResourcesItem file in response._embedded.items)
-                    {
-                        string lString = file.name;
-                        if (EWXTelegramBot.HasCyrillic(lString)) lString = EWXTelegramBot.Transliterate(lString);
-                        if (localdata.ContainsAudio(lString)) continue;
-                        else
-                        {
-                            newAudios.Add(lString);
-                            url = new EWXRequestBuilder(_yapi).SetMethod("disk/resources/download").AddParameter("path", file.path).BuildRequest();
-                            YandexDiskResourceDownloadResponse downloadResponse = JsonSerializer.Deserialize<YandexDiskResourceDownloadResponse>(EWXTelegramBot.SendRequest(url, _yandexToken, "GET"));
-                            WebClient client = new WebClient();
-                            string filePath = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder" + Path.DirectorySeparatorChar + "audios" + Path.DirectorySeparatorChar + lString;
-                            client.DownloadFile(downloadResponse.href, filePath);
-                            EWXTelegramBot.PrintLine("Файл " + lString + " загружен в локальное хранилище");
-                        }
-                    }
-                    if (newAudios.Count > 0)
-                    {
-                        localdata.AddAudios(newAudios);
-                        EWXTelegramBot.PrintLine("Загружено " + newAudios.Count + " новых аудиозаписей");
-                    }
-                    _lastSync = EWXTelegramBot.GetCurrentTimeMillis();
-                    localdata.Save();
-                }
-                else EWXTelegramBot.PrintLine("Не удалось получить содержимое облака Yandex. Описание ошибки >> " + response.description);
+                EWXYandexSyncronizer sync = new EWXYandexSyncronizer(_yandexToken);
+                localdata = EWXTelegramBot.GetLocalData();
+                _lastSync = EWXTelegramBot.GetCurrentTimeMillis();
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.SyncData()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.SyncData()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:SyncData IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "SyncData", e.GetType().ToString(), e.Message, e.StackTrace);
             }
         }
 
@@ -625,11 +504,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.ScanLocalFolders()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.ScanLocalFolders()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:ScanLocalFolders IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "ScanLocalFolders", e.GetType().ToString(), e.Message, e.StackTrace);
             }
         }
 
@@ -667,23 +542,23 @@ namespace me.ewerestr.ewxtelegrambot
                 audio = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder" + Path.DirectorySeparatorChar + "audios" + Path.DirectorySeparatorChar + audio;
                 SendPhoto(photo);
                 SendAudio(audio);
-                _lastPostDate = DateTime.Now.ToString("G").Split(' ')[0];
+                //_lastPostDate = DateTime.Now.ToString("G").Split(' ')[0];  // LEGACY
                 //EWXTelegramBot.PrintLine("[EWXController] The post has been successfuly delegated to TelegramInstance);
                 return true;
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.Post()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.Post()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:Post IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "Post", e.GetType().ToString(), e.Message, e.StackTrace);
             }
             return false;
         }
 
-        private bool CheckTime()
+        private void CheckTime() // DEP
         {
+            DateTime nextPostDate = new DateTime(_nextPostDate[0], _nextPostDate[1], _nextPostDate[2], _nextPostDate[3], _nextPostDate[4], 0);
+            TimeSpan different = nextPostDate.Subtract(DateTime.Now);
+            EWXTelegramBot.StartTimer(nextPostDate);
+            /* #LEGACY CODE
             bool output = false;
             try
             {
@@ -703,13 +578,9 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.CheckTime()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.CheckTime()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:CheckTime IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "CheckTime", e.GetType().ToString(), e.Message, e.StackTrace);
             }
-            return output;
+            return output; */
         }
 
         public string GetLiteStatus()
@@ -720,16 +591,12 @@ namespace me.ewerestr.ewxtelegrambot
                 status += "Component status: " + _status.ToString() + Environment.NewLine;
                 //status += "Posted materials: Images :> " + _postedPhotos.Count + " :: Audios :> " + _postedAudios.Count + Environment.NewLine;
                 //status += "Unposted materials: Images :> " + _unpostedPhotoList.Count + " :: Audios :> " + _unpostedAudioList.Count + Environment.NewLine;
-                status += "Last post date: " + _lastPostDate + Environment.NewLine;
+                // status += "Last post date: " + _lastPostDate + Environment.NewLine; // LEGACY
                 status += "# # # # PRINTSTATUS END # # # # #";
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.GetLiteStatus()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.GetLiteStatus()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:GetLiteStatus IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "GetLiteStatus", e.GetType().ToString(), e.Message, e.StackTrace);
             }
             return status;
         }
@@ -750,14 +617,14 @@ namespace me.ewerestr.ewxtelegrambot
                 status += "*Sync cooldown: " + _syncCooldown + Environment.NewLine;
                 status += "Current longpoll offset: " + _offset + Environment.NewLine;
                 status += "Last sync date in milliseconds: " + _lastSync + Environment.NewLine;
-                status += "Last post date: " + _lastPostDate + Environment.NewLine;
+                //status += "Last post date: " + _lastPostDate + Environment.NewLine; // LEGACY
                 status += "*Current telegram token: " + _telegramToken + Environment.NewLine;
                 status += "Bot's telegram name: " + _myself + Environment.NewLine;
                 status += "Current secret: " + (string.IsNullOrEmpty(_secret) ? "no secret code" : _secret) + Environment.NewLine;
                 status += "Current channel secret: " + (string.IsNullOrEmpty(_channelSecret) ? "no channel secret code" : _channelSecret) + Environment.NewLine;
                 status += "Last error message: " + _error + Environment.NewLine;
                 status += "*Current Yandex token: " + _yandexToken + Environment.NewLine;
-                status += "*Post time: " + (_postTime[0] < 10 ? ("0" + _postTime[0]) : _postTime[0].ToString()) + ":" + (_postTime[1] < 10 ? ("0" + _postTime[1]) : _postTime[1].ToString()) + Environment.NewLine;
+                // status += "*Post time: " + (_postTime[0] < 10 ? ("0" + _postTime[0]) : _postTime[0].ToString()) + ":" + (_postTime[1] < 10 ? ("0" + _postTime[1]) : _postTime[1].ToString()) + Environment.NewLine; // LEGACY
                 if (_telegramAdmins.Count > 0)
                 {
 
@@ -779,11 +646,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.GetDetailedStatus()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.GetDetailedStatus()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:GetDetailedStatus IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "GetDetailedStatus", e.GetType().ToString(), e.Message, e.StackTrace);
             }
             return status;
         }
@@ -814,11 +677,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
             catch (Exception e)
             {
-                SendMessage("An error occured at EWXController.CheckUpdates()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXController.CheckUpdates()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXController Method:CheckUpdates IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "CheckUpdates", e.GetType().ToString(), e.Message, e.StackTrace);
             }
             return false;
         }
@@ -828,6 +687,12 @@ namespace me.ewerestr.ewxtelegrambot
         {
             return _status;
         }
+
+        public DateTime GetNextPostDate()
+        {
+            return new DateTime(_nextPostDate[0], _nextPostDate[1], _nextPostDate[2], _nextPostDate[3], _nextPostDate[4], 0);
+        }
+
         public void SetPostAgain(bool postagain)
         {
             _postAgain = postagain;
@@ -891,6 +756,7 @@ namespace me.ewerestr.ewxtelegrambot
 
         //yandextoken
 
+        /* #LEGACY CODE //// WILL BE DELETED
         public void SetLastPostDate(string lastPostDate)
         {
             _lastPostDate = lastPostDate;
@@ -900,6 +766,7 @@ namespace me.ewerestr.ewxtelegrambot
         {
             _postTime = postTime;
         }
+        */
 
         public void SetBotUsername(string username)
         {

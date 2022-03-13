@@ -24,7 +24,7 @@
             return _command;
         }
 
-        public string[] getArgumentsArray()
+        public string[] GetArgumentsArray()
         {
             return _arguments;
         }

@@ -35,11 +35,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
             }
             catch (Exception e)
             {
-                EWXTelegramBot.GetController().SendMessage("An error occured at EWXCommandHandler.Listen()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXCommandHandler.Listen()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXCommandHandler Method:Listen IncomingParams:none");
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "Listen", e.GetType().ToString(), e.Message, e.StackTrace);
             }
         }
 
@@ -69,14 +65,15 @@ namespace me.ewerestr.ewxtelegrambot.Components
                             cmessage = "Текущая конфигурация успешно сохранена!";
                             break;
                         }
-                    case "setposttime":
+                    /*
+                    case "setposttime": // WILL BE DELETED
                         {
 
                             if (cmd.HasArguments())
                             {
-                                if (cmd.getArgumentsArray()[0].Contains(":"))
+                                if (cmd.GetArgumentsArray()[0].Contains(":"))
                                 {
-                                    string[] lStringArr = cmd.getArgumentsArray()[0].Split(':');
+                                    string[] lStringArr = cmd.GetArgumentsArray()[0].Split(':');
                                     byte[] time = new byte[2];
                                     if (byte.TryParse(lStringArr[0], out time[0]) && byte.TryParse(lStringArr[1], out time[1]))
                                     {
@@ -90,12 +87,13 @@ namespace me.ewerestr.ewxtelegrambot.Components
                             else cmessage = "Программа должна иметь аргументы. Пример: \"setPostTime 9:15\"";
                             break;
                         }
+                    */
                     case "setdeviation":
                         {
                             if (cmd.HasArguments())
                             {
                                 int lInt;
-                                if (int.TryParse(cmd.getArgumentsArray()[0], out lInt))
+                                if (int.TryParse(cmd.GetArgumentsArray()[0], out lInt))
                                 {
                                     EWXTelegramBot.GetController().SetDeviation(lInt);
                                     cmessage = "Успех! Новый интервал погрешности установлен!";
@@ -110,7 +108,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
                             if (cmd.HasArguments())
                             {
                                 int lInt;
-                                if (int.TryParse(cmd.getArgumentsArray()[0], out lInt))
+                                if (int.TryParse(cmd.GetArgumentsArray()[0], out lInt))
                                 {
                                     EWXTelegramBot.GetController().SetRefreshCooldown(lInt);
                                     cmessage = "Успех! Новый интервал тактов главного модуля установлен!";
@@ -125,7 +123,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
                             if (cmd.HasArguments())
                             {
                                 int lInt;
-                                if (int.TryParse(cmd.getArgumentsArray()[0], out lInt))
+                                if (int.TryParse(cmd.GetArgumentsArray()[0], out lInt))
                                 {
                                     EWXTelegramBot.GetController().SetLongpollTimeout(lInt);
                                     cmessage = "Успех! Новое значение интервала опроса Longpoll-сервера Telegram установлено!";
@@ -139,11 +137,11 @@ namespace me.ewerestr.ewxtelegrambot.Components
                         {
                             if (cmd.HasArguments())
                             {
-                                string lString = EWXTelegramBot.GetController().TestTelegramToken(cmd.getArgumentsArray()[0]);
+                                string lString = EWXTelegramBot.GetController().TestTelegramToken(cmd.GetArgumentsArray()[0]);
                                 if (string.IsNullOrEmpty(lString)) cmessage = "Token is invalid. Try other token or make it right";
                                 else
                                 {
-                                    EWXTelegramBot.GetController().SetTelegramToken(cmd.getArgumentsArray()[0]);
+                                    EWXTelegramBot.GetController().SetTelegramToken(cmd.GetArgumentsArray()[0]);
                                     EWXTelegramBot.GetController().SetBotUsername(lString);
                                     cmessage = "Успех! Токен прошел валидацию. Установка токена как основгого и установка имени бота.";
                                 }
@@ -156,7 +154,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
                             if (cmd.HasArguments())
                             {
                                 int lInt;
-                                if (int.TryParse(cmd.getArgumentsArray()[0], out lInt))
+                                if (int.TryParse(cmd.GetArgumentsArray()[0], out lInt))
                                 {
                                     if (lInt >= 10 && lInt <= 128)
                                     {
@@ -168,6 +166,46 @@ namespace me.ewerestr.ewxtelegrambot.Components
                                 else cmessage = "Некорректные аргументы команды. Аргумент должен быть числом. Пример: \"setSecretLength 64\"";
                             }
                             else cmessage = "Команда должна иметь аргументы. Пример: \"setSecretLength 64\"";
+                            break;
+                        }
+                    case "setpostinterval":
+                        {
+                            if (cmd.HasArguments())
+                            {
+                                DateTime startPoint;
+                                int[] dt = new int[] {DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second};
+                                if (cmd.GetArgumentsCount() > 1)
+                                {
+                                    string starttime = cmd.GetArgumentsArray()[1];
+                                    if (starttime.Contains(":"))
+                                    {
+                                        string[] q = starttime.Split(':');
+                                        if (int.TryParse(q[0], out dt[4]) && int.TryParse(q[1], out dt[5]))
+                                        {
+                                            int a = 0;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        cmessage = "Некорректные аргументы команды. Стартовое время должно быть в формате ЧЧ:ММ. Пример: \"setPostInterval 1d2h3m4s 10:00\"";
+                                        break;
+                                    }
+                                }
+                                int[] ir = EWXTelegramBot.ParseCooldown(cmd.GetArgumentsArray()[0]);
+                                if (ir[0] < 0)
+                                {
+                                    // error
+                                }
+                                else
+                                {
+                                    startPoint = new DateTime(dt[0], dt[1], dt[2], dt[3], dt[4], dt[5]);
+                                    DateTime endPoint = startPoint.AddDays(ir[0]).AddHours(ir[1]).AddMinutes(ir[2]).AddSeconds(ir[3]);
+                                    TimeSpan w = endPoint.Subtract(startPoint);
+                                    int[] nd = new int[] {w.Days, w.Hours, w.Minutes, w.Seconds};
+                                    EWXTelegramBot.GetController()._postInterval = nd;
+                                }
+
+                            }
                             break;
                         }
                     case "generatesecret":
@@ -187,7 +225,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
                             if (cmd.HasArguments())
                             {
                                 int lInt;
-                                if (int.TryParse(cmd.getArgumentsArray()[0], out lInt))
+                                if (int.TryParse(cmd.GetArgumentsArray()[0], out lInt))
                                 {
                                     EWXTelegramBot.GetController().SetInvitesCount(lInt);
                                     cmessage = "Количество допустимых приглашений установлено на " + lInt;
@@ -392,11 +430,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
             }
             catch (Exception e)
             {
-                EWXTelegramBot.GetController().SendMessage("An error occured at EWXCommandHandler.HandleCommand()" + Environment.NewLine + "See last log to get more details");
-                Console.WriteLine("An error occured at EWXCommandHandler.HandleCommand()" + Environment.NewLine + "See last log to get more details");
-                EWXTelegramBot.PrintService("[WARN] Class:EWXCommandHandler Method:HandleCommand IncomingParams:EWXCommand>Command=" + cmd.GetCommand());
-                EWXTelegramBot.PrintService("[WARN] Exception: " + e.GetType().ToString() + "; Message: " + e.Message);
-                EWXTelegramBot.PrintService("[WARN] StackTrace: " + e.StackTrace);
+                EWXTelegramBot.StackTrace(this.GetType().Name, "HandleCommand", e.GetType().ToString(), e.Message, e.StackTrace, ("EWXCommand>Command=" + cmd.GetCommand()));
             }
             return false;
         }
