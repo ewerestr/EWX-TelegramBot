@@ -46,18 +46,6 @@ namespace me.ewerestr.ewxtelegrambot.Utils
             return _unpostedAudioList;
         }
 
-        public bool HasImage(string image)
-        {
-            if (_postedImageList.Contains(image) || _unpostedImageList.Contains(image)) return true;
-            return false;
-        }
-
-        public bool HasAudio(string audio)
-        {
-            if (_postedAudioList.Contains(audio) || _unpostedAudioList.Contains(audio)) return true;
-            return false;
-        }
-
         public bool HasImages()
         {
             return (_postedImageList.Count + _unpostedImageList.Count) > 0 ? true : false;
@@ -144,6 +132,16 @@ namespace me.ewerestr.ewxtelegrambot.Utils
         public int GetAudiosCount()
         {
             return _postedAudioList.Count + _unpostedAudioList.Count;
+        }
+
+        public bool ContainsAudio(string audio)
+        {
+            return _unpostedAudioList.Contains(audio) ? true : (_postedAudioList.Contains(audio) ? true : false);
+        }
+
+        public bool ContainsImage(string image)
+        {
+            return _unpostedImageList.Contains(image) ? true : (_postedImageList.Contains(image) ? true : false);
         }
 
         public void Save()

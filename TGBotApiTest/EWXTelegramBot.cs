@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 
@@ -38,7 +39,6 @@ namespace me.ewerestr.ewxtelegrambot
 		static void Main(string[] args)
 		{
 			_logger = new EWXLogger();
-			FillTranslit();
 			_commandHandler = new EWXCommandHandler();
 			_commandhandlerThread = new Thread(_commandHandler.Start);
 			InitController();
@@ -125,75 +125,17 @@ namespace me.ewerestr.ewxtelegrambot
 			return output == null ? new EWXLocalData() : output;
         }
 
-		private static void FillTranslit()
-        {
-			_translit.Add("А", "A"); 
-			_translit.Add("Б", "B"); 
-			_translit.Add("В", "V"); 
-			_translit.Add("Г", "G"); 
-			_translit.Add("Д", "D"); 
-			_translit.Add("Е", "E"); 
-			_translit.Add("Ё", "JO"); 
-			_translit.Add("Ж", "ZH"); 
-			_translit.Add("З", "Z"); 
-			_translit.Add("И", "I"); 
-			_translit.Add("Й", "JJ"); 
-			_translit.Add("К", "K"); 
-			_translit.Add("Л", "L"); 
-			_translit.Add("М", "M"); 
-			_translit.Add("Н", "N"); 
-			_translit.Add("О", "O"); 
-			_translit.Add("П", "P"); 
-			_translit.Add("Р", "R"); 
-			_translit.Add("С", "S"); 
-			_translit.Add("Т", "T"); 
-			_translit.Add("У", "U"); 
-			_translit.Add("Ф", "F"); 
-			_translit.Add("Х", "KH"); 
-			_translit.Add("Ц", "C"); 
-			_translit.Add("Ч", "CH"); 
-			_translit.Add("Ш", "SH"); 
-			_translit.Add("Щ", "SHH"); 
-			_translit.Add("Ъ", "'"); 
-			_translit.Add("Ы", "Y"); 
-			_translit.Add("Ь", ""); 
-			_translit.Add("Э", "EH"); 
-			_translit.Add("Ю", "YU"); 
-			_translit.Add("Я", "YA"); 
-			_translit.Add("а", "a"); 
-			_translit.Add("б", "b"); 
-			_translit.Add("в", "v"); 
-			_translit.Add("г", "g"); 
-			_translit.Add("д", "d"); 
-			_translit.Add("е", "e"); 
-			_translit.Add("ё", "jo"); 
-			_translit.Add("ж", "zh"); 
-			_translit.Add("з", "z"); 
-			_translit.Add("и", "i"); 
-			_translit.Add("й", "jj"); 
-			_translit.Add("к", "k"); 
-			_translit.Add("л", "l"); 
-			_translit.Add("м", "m"); 
-			_translit.Add("н", "n"); 
-			_translit.Add("о", "o"); 
-			_translit.Add("п", "p"); 
-			_translit.Add("р", "r"); 
-			_translit.Add("с", "s"); 
-			_translit.Add("т", "t"); 
-			_translit.Add("у", "u"); 
-			_translit.Add("ф", "f"); 
-			_translit.Add("х", "kh"); 
-			_translit.Add("ц", "c"); 
-			_translit.Add("ч", "ch"); 
-			_translit.Add("ш", "sh"); 
-			_translit.Add("щ", "shh"); 
-			_translit.Add("ъ", ""); 
-			_translit.Add("ы", "y"); 
-			_translit.Add("ь", ""); 
-			_translit.Add("э", "eh"); 
-			_translit.Add("ю", "yu"); 
-			_translit.Add("я", "ya");
-
+		public static string ParseRight(string source)
+		{
+			StringBuilder sb = new StringBuilder();
+			foreach (char c in source)
+			{
+				if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= 'а' && c <= 'я') || (c >= 'А' && c <= 'Я') || c == '.' || c == '_' || c == '-' || c == ' ' || c == 'ё' || c == 'Ё')
+				{
+					sb.Append(c);
+				}
+			}
+			return sb.ToString();
 		}
 
 		public static void StopAll()

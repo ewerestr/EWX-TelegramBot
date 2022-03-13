@@ -1,10 +1,10 @@
 ﻿using me.ewerestr.ewxtelegrambot.Responses;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
+using System.Net;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace me.ewerestr.ewxtelegrambot.Utils
 {
@@ -22,9 +22,12 @@ namespace me.ewerestr.ewxtelegrambot.Utils
         public EWXYandexSyncronizer(string yandexToken)
         {
             _yandexToken = yandexToken;
+            _localData = EWXTelegramBot.GetLocalData();
             ScanHierarchy();
             GetSubfolders("disk:/EWXTelegramBot");
-            // Checking for existance in localfolder
+            ScanSubfolders();
+            DownloadAll();
+            Console.WriteLine();
         }
 
         private void ScanHierarchy()
@@ -48,10 +51,27 @@ namespace me.ewerestr.ewxtelegrambot.Utils
                     fullscanAudios.Add(GetAudios(path));
                 }
             }
+            if (fullscanSubfolders.Count > 0) foreach (List<string> list in fullscanSubfolders) _subfolders = _subfolders.Concat(list).ToList();
             _images = _images.Concat(rootImages).ToList();
             if (fullscanImages.Count > 0) foreach (List<string> list in fullscanImages) _images = _images.Concat(list).ToList();
             _audios = _audios.Concat(rootAudios).ToList();
             if (fullscanAudios.Count > 0) foreach (List<string> list in fullscanAudios) _audios = _audios.Concat(list).ToList();
+        }
+
+        private void ScanSubfolders()
+        {
+            List<List<string>> images = new List<List<string>>();
+            List<List<string>> audios = new List<List<string>>();
+            if (_subfolders.Count > 0)
+            {
+                foreach (string folder in _subfolders)
+                {
+                    images.Add(GetImages(folder));
+                    audios.Add(GetAudios(folder));
+                }
+            }
+            if (images.Count > 0) foreach (List<string> list in images) _images = _images.Concat(list).ToList();
+            if (audios.Count > 0) foreach (List<string> list in audios) _audios = _audios.Concat(list).ToList();
         }
 
         private List<string> GetSubfolders(string path)
@@ -118,7 +138,42 @@ namespace me.ewerestr.ewxtelegrambot.Utils
 
         private void DownloadAll()
         {
-
+            int audioCounter = 0;
+            int imageCounter = 0;
+            foreach (string image in _images)
+            {
+                string lString = EWXTelegramBot.ParseRight(Path.GetFileName(image));
+                if (_localData.ContainsImage(lString)) continue;
+                else
+                {
+                    string request = new EWXRequestBuilder(EWXTelegramBot.GetYandexAPI()).SetMethod("disk/resources/download").AddParameter("path", image).BuildRequest(); ;
+                    YandexDiskResourceDownloadResponse downloadResponse = JsonSerializer.Deserialize<YandexDiskResourceDownloadResponse>(EWXTelegramBot.SendRequest(request, _yandexToken, "GET"));
+                    WebClient client = new WebClient();
+                    string filePath = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder" + Path.DirectorySeparatorChar + "images" + Path.DirectorySeparatorChar + lString;
+                    client.DownloadFile(downloadResponse.href, filePath);
+                    EWXTelegramBot.PrintLine("Файл " + lString + " загружен в локальное хранилище");
+                    _localData.AddImage(lString);
+                    imageCounter++;
+                }
+            }
+            foreach (string audio in _audios)
+            {
+                string lString = EWXTelegramBot.ParseRight(Path.GetFileName(audio));
+                if (_localData.ContainsAudio(lString)) continue;
+                else
+                {
+                    string request = new EWXRequestBuilder(EWXTelegramBot.GetYandexAPI()).SetMethod("disk/resources/download").AddParameter("path", audio).BuildRequest(); ;
+                    YandexDiskResourceDownloadResponse downloadResponse = JsonSerializer.Deserialize<YandexDiskResourceDownloadResponse>(EWXTelegramBot.SendRequest(request, _yandexToken, "GET"));
+                    WebClient client = new WebClient();
+                    string filePath = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder" + Path.DirectorySeparatorChar + "audios" + Path.DirectorySeparatorChar + lString;
+                    client.DownloadFile(downloadResponse.href, filePath);
+                    EWXTelegramBot.PrintLine("Файл " + lString + " загружен в локальное хранилище");
+                    _localData.AddAudio(lString);
+                    audioCounter++;
+                }
+            }
+            Console.WriteLine("Загружено " + imageCounter + " изображений и " + audioCounter + " аудиозаписей");
+            _localData.Save();
         }
     }
 }

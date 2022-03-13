@@ -482,6 +482,8 @@ namespace me.ewerestr.ewxtelegrambot
         {
             try
             {
+                EWXYandexSyncronizer sync = new EWXYandexSyncronizer(_yandexToken);
+                /*
                 string url = new EWXRequestBuilder(_yapi)
                 .SetMethod("disk/resources")
                 .AddParameter("path", "EWXTelegramBot")
@@ -509,7 +511,7 @@ namespace me.ewerestr.ewxtelegrambot
                     if (response.error != null) EWXTelegramBot.PrintLine("Не удалось создать папку  \"EWXTelegramBot\\audios\" в облаке Yandex. Описание ошибки >> " + response.description);
                     return false;
                 }
-                else EWXTelegramBot.PrintLine("Папка приложения найдена на облаке Yandex");
+                else EWXTelegramBot.PrintLine("Папка приложения найдена на облаке Yandex");*/
                 return true;
             }
             catch (Exception e)
@@ -538,7 +540,7 @@ namespace me.ewerestr.ewxtelegrambot
                     {
                         string lString = file.name;
                         if (EWXTelegramBot.HasCyrillic(lString)) lString = EWXTelegramBot.Transliterate(lString);
-                        if (localdata.HasImage(lString)) continue;
+                        if (localdata.ContainsImage(lString)) continue;
                         else
                         {
                             newPhotos.Add(lString);
@@ -566,7 +568,7 @@ namespace me.ewerestr.ewxtelegrambot
                     {
                         string lString = file.name;
                         if (EWXTelegramBot.HasCyrillic(lString)) lString = EWXTelegramBot.Transliterate(lString);
-                        if (localdata.HasAudio(lString)) continue;
+                        if (localdata.ContainsAudio(lString)) continue;
                         else
                         {
                             newAudios.Add(lString);
