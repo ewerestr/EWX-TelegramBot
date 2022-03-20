@@ -194,7 +194,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
                                 int[] ir = EWXTelegramBot.ParseCooldown(cmd.GetArgumentsArray()[0]);
                                 if (ir[0] < 0)
                                 {
-                                    // error
+                                    cmessage = "Некорректные аргументы команды. Неверная трактовка интервала публикаций. Пример: \"setPostInterval 1d2h3m4s 10:00\"";
                                 }
                                 else
                                 {
@@ -202,9 +202,11 @@ namespace me.ewerestr.ewxtelegrambot.Components
                                     DateTime endPoint = startPoint.AddDays(ir[0]).AddHours(ir[1]).AddMinutes(ir[2]).AddSeconds(ir[3]);
                                     TimeSpan w = endPoint.Subtract(startPoint);
                                     int[] nd = new int[] {w.Days, w.Hours, w.Minutes, w.Seconds};
-                                    EWXTelegramBot.GetController()._postInterval = nd;
+                                    EWXTelegramBot.GetController().SetNextPostDate(endPoint);
+                                    EWXTelegramBot.GetController().SetPostInterval(nd);
+                                    cmessage = "Успех! Интервал публикаций изменен";
+                                    //EWXTelegramBot.GetController()._postInterval = nd; // WILL BE DELETED
                                 }
-
                             }
                             break;
                         }

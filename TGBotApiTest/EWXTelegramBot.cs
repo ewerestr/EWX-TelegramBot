@@ -202,8 +202,9 @@ namespace me.ewerestr.ewxtelegrambot
 			return false;
         }
 
-		public static void StartTimer(DateTime nextPostDate)
+		public static void StartTimer(DateTime nextPostDate, bool overrideTimer = false)
         {
+			if (overrideTimer) if (_timer != null) _timer.Dispose();
 			TimeSpan difference = nextPostDate.Subtract(DateTime.Now);
 			_timerCallback = new TimerCallback(RestartTimer);
 			_timer = new Timer(_timerCallback, 0, (long)difference.TotalMilliseconds, 1000);

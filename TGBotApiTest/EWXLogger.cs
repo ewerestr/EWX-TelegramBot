@@ -83,8 +83,10 @@ namespace me.ewerestr.ewxtelegrambot.Components
         {
             if (_templog.Count > 0)
             {
-                using (StreamWriter sw = new StreamWriter(_path, true, System.Text.Encoding.UTF8))
+                Stream st;
+                using (st = File.Open(_path, FileMode.OpenOrCreate, FileAccess.Write)) // StreamWriter sw = new StreamWriter(_path, true, System.Text.Encoding.UTF8)
                 {
+                    StreamWriter sw = new StreamWriter(st);
                     foreach (string l in _templog) sw.WriteLine(l);
                 }
                 _templog.Clear();

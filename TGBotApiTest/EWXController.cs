@@ -37,13 +37,12 @@ namespace me.ewerestr.ewxtelegrambot
         private int _invites = 0;                                                           // longpoll
         public int _secretLength { get; set; } = 32;
         public int _syncCooldown { get; set; } = 60;
-        public int[] _nextPostDate { get; set; } = { DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.AddDays(1).Day, DateTime.Now.Hour, DateTime.Now.Minute };
+        public int[] _nextPostDate { get; set; } = { DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.AddDays(1).Day, DateTime.Now.Hour, DateTime.Now.Minute, 0 };
         public int[] _postInterval { get; set; } = { 1, 0, 0, 0 }; // d, h, m, s
 
         public long _offset { get; set; } = 0;                                              // longpoll
         public long _lastSync { get; set; } = 0;                                            // yandex
 
-        //public string _lastPostDate { get; set; } = "neverbefore";                          // controller //// WILL BE DELETED
         public string _telegramToken { get; set; }                                          // tg ins
         public string _myself { get; set; }                                                 // tg longpoll
         public string _secret { get; set; } = null;                                         // longpoll
@@ -56,7 +55,6 @@ namespace me.ewerestr.ewxtelegrambot
 
         public List<string> _telegramPeers { get; set; } = new List<string>();              // tg ins
         public List<TLAdmin> _telegramAdmins { get; set; } = new List<TLAdmin>();           // tg longpoll
-        //private List<string> _postedAudios = new List<string>();                          // controller
         [JsonIgnore]
         private EWXLocalData localdata;
 
@@ -97,7 +95,7 @@ namespace me.ewerestr.ewxtelegrambot
                 _longpollThread = new Thread(Longpoll);
                 //_controllerThread = new Thread(Controller);   // LEGACY //// WILL BE DELETED
                 _longpollThread.Start();
-                _controllerThread.Start();
+                //_controllerThread.Start();
                 if (_telegramPeers.Count == 0) EWXTelegramBot.PrintLine("Внимание! Список получателей пуст. Добавьте получателей при помощи команд \"generatechannelsecret\" или \"setinvites <number>\"");
             }
             catch (Exception e)
@@ -688,9 +686,25 @@ namespace me.ewerestr.ewxtelegrambot
             return _status;
         }
 
+        public int[] GetPostInterval()
+        {
+            return _postInterval;
+        }
+
+        public void SetPostInterval(int[] postInterval)
+        {
+            _postInterval = postInterval;
+            EWXTelegramBot.StartTimer(GetNextPostDate(), true);
+        }
+
         public DateTime GetNextPostDate()
         {
-            return new DateTime(_nextPostDate[0], _nextPostDate[1], _nextPostDate[2], _nextPostDate[3], _nextPostDate[4], 0);
+            return new DateTime(_nextPostDate[0], _nextPostDate[1], _nextPostDate[2], _nextPostDate[3], _nextPostDate[4], _nextPostDate[5]);
+        }
+
+        public void SetNextPostDate(DateTime nextPostDate)
+        {
+            _nextPostDate = new int[] { nextPostDate.Year, nextPostDate.Month, nextPostDate.Day, nextPostDate.Hour, nextPostDate.Minute, nextPostDate.Second };
         }
 
         public void SetPostAgain(bool postagain)
