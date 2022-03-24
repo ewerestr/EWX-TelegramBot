@@ -116,10 +116,15 @@ namespace me.ewerestr.ewxtelegrambot
 		public static EWXLocalData GetLocalData()
         {
 			EWXLocalData output;
-			using (StreamReader sr = new StreamReader(EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder.ewx", System.Text.Encoding.Default))
+			string fpath = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder.ewx";
+			if (File.Exists(fpath))
 			{
-				output = JsonSerializer.Deserialize<EWXLocalData>(sr.ReadToEnd());
+				using (StreamReader sr = new StreamReader(EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder.ewx", System.Text.Encoding.Default))
+				{
+					output = JsonSerializer.Deserialize<EWXLocalData>(sr.ReadToEnd());
+				}
 			}
+			else output = null;
 			return output == null ? new EWXLocalData() : output;
         }
 
