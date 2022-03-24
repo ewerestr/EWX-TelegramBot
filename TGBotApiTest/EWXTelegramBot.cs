@@ -206,17 +206,23 @@ namespace me.ewerestr.ewxtelegrambot
         {
 			if (overrideTimer) if (_timer != null) _timer.Dispose();
 			TimeSpan difference = nextPostDate.Subtract(DateTime.Now);
+			if(difference.TotalSeconds <= 0)
+            {
+				nextPostDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, nextPostDate.Hour, nextPostDate.Minute, nextPostDate.Second).AddDays(1);
+				difference = nextPostDate.Subtract(DateTime.Now);
+			}
 			_timerCallback = new TimerCallback(RestartTimer);
 			_timer = new Timer(_timerCallback, 0, (long)difference.TotalMilliseconds, 1000);
 		}
 
 		private static void RestartTimer(object obj)
         {
+			_timer.Dispose();
 			DateTime nextPostDate = _controller.GetNextPostDate();
 			_controller.Post();
 			int[] interval = _controller._postInterval;
 			nextPostDate = nextPostDate.AddDays(interval[0]).AddHours(interval[1]).AddMinutes(interval[2]).AddSeconds(interval[3]);
-			_controller._postInterval = new int[] {nextPostDate.Year, nextPostDate.Month, nextPostDate.Day, nextPostDate.Hour, nextPostDate.Minute, nextPostDate.Second};
+			_controller._nextPostDate = new int[] {nextPostDate.Year, nextPostDate.Month, nextPostDate.Day, nextPostDate.Hour, nextPostDate.Minute, nextPostDate.Second};
 			StartTimer(nextPostDate);
         }
 

@@ -43,7 +43,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
                 wpath += Path.DirectorySeparatorChar + npath[i];
                 if (!Directory.Exists(wpath)) Directory.CreateDirectory(wpath);
             }
-            if (!File.Exists(_path)) File.Create(_path);
+            //if (!File.Exists(_path)) File.Create(_path);
         }
 
         public void Log(string text, bool print = false)

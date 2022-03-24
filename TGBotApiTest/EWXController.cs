@@ -538,7 +538,7 @@ namespace me.ewerestr.ewxtelegrambot
                 }
                 photo = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder" + Path.DirectorySeparatorChar + "images" + Path.DirectorySeparatorChar + photo;
                 audio = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder" + Path.DirectorySeparatorChar + "audios" + Path.DirectorySeparatorChar + audio;
-                SendPhoto(photo);
+           SendPhoto(photo);
                 SendAudio(audio);
                 //_lastPostDate = DateTime.Now.ToString("G").Split(' ')[0];  // LEGACY
                 //EWXTelegramBot.PrintLine("[EWXController] The post has been successfuly delegated to TelegramInstance);
@@ -689,6 +689,15 @@ namespace me.ewerestr.ewxtelegrambot
         public int[] GetPostInterval()
         {
             return _postInterval;
+        }
+
+        public TimeSpan GetPostIntervalAsTimeSpan()
+        {
+            long totalseconds = _postInterval[3];
+            totalseconds += _postInterval[2] * 60;
+            totalseconds += _postInterval[1] * 3600;
+            totalseconds += _postInterval[0] * 86400;
+            return TimeSpan.FromSeconds(totalseconds);
         }
 
         public void SetPostInterval(int[] postInterval)

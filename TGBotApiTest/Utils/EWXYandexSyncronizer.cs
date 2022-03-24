@@ -27,7 +27,6 @@ namespace me.ewerestr.ewxtelegrambot.Utils
             GetSubfolders("disk:/EWXTelegramBot");
             ScanSubfolders();
             DownloadAll();
-            Console.WriteLine();
         }
 
         private void ScanHierarchy()
@@ -172,7 +171,7 @@ namespace me.ewerestr.ewxtelegrambot.Utils
                     audioCounter++;
                 }
             }
-            Console.WriteLine("Загружено " + imageCounter + " изображений и " + audioCounter + " аудиозаписей");
+            EWXTelegramBot.PrintLine("Загружено " + imageCounter + " изображений и " + audioCounter + " аудиозаписей");
             _localData.Save();
         }
     }
