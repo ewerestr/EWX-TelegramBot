@@ -180,7 +180,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
                                     if (starttime.Contains(":"))
                                     {
                                         string[] q = starttime.Split(':');
-                                        if (int.TryParse(q[0], out dt[4]) && int.TryParse(q[1], out dt[5]))
+                                        if (int.TryParse(q[0], out dt[3]) && int.TryParse(q[1], out dt[4]))
                                         {
                                             int a = 0;
                                         }
