@@ -173,7 +173,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
                             if (cmd.HasArguments())
                             {
                                 DateTime startPoint;
-                                int[] dt = new int[] {DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second};
+                                int[] dt = new int[] {DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, DateTime.Now.Minute, 0};
                                 if (cmd.GetArgumentsCount() > 1)
                                 {
                                     string starttime = cmd.GetArgumentsArray()[1];
@@ -182,7 +182,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
                                         string[] q = starttime.Split(':');
                                         if (int.TryParse(q[0], out dt[3]) && int.TryParse(q[1], out dt[4]))
                                         {
-                                            int a = 0;
+                                            // otsosi
                                         }
                                     }
                                     else
@@ -204,7 +204,10 @@ namespace me.ewerestr.ewxtelegrambot.Components
                                     int[] nd = new int[] {w.Days, w.Hours, w.Minutes, w.Seconds};
                                     EWXTelegramBot.GetController().SetNextPostDate(endPoint);
                                     EWXTelegramBot.GetController().SetPostInterval(nd);
-                                    cmessage = "Успех! Интервал публикаций изменен";
+                                    cmessage = "Успех! Интервал публикаций изменен. ";
+                                    cmessage += "Новый интервал - " + w.Days + " дней " + w.Hours + " часов " + w.Minutes + " минут " + w.Seconds + " секунд. ";
+                                    cmessage += "Расчет времени выполнен от " + (cmd.GetArgumentsCount() > 1 ? startPoint.ToString("G").Split(' ')[1] + " сегодняшнего дня. " : "момента выполнения команды. ");
+                                    cmessage += "Следующая публикация запланирована на " + endPoint.ToString("G");
                                     //EWXTelegramBot.GetController()._postInterval = nd; // WILL BE DELETED
                                 }
                             }
