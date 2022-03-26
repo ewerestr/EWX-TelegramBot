@@ -134,6 +134,31 @@ namespace me.ewerestr.ewxtelegrambot.Utils
             return _postedAudioList.Count + _unpostedAudioList.Count;
         }
 
+        public int GetUnpostedImagesCount()
+        {
+            return _unpostedImageList.Count;
+        }
+
+        public int GetUnpostedAudiosCount()
+        {
+            return _unpostedAudioList.Count;
+        }
+
+        public int GetPostedImagesCount()
+        {
+            return _postedImageList.Count;
+        }
+
+        public int GetPostedAudiosCount()
+        {
+            return _postedAudioList.Count;
+        }
+
+        public int GetAllMaterialsCount()
+        {
+            return (GetImagesCount() + GetAudiosCount());
+        }
+
         public bool ContainsAudio(string audio)
         {
             return _unpostedAudioList.Contains(audio) ? true : (_postedAudioList.Contains(audio) ? true : false);
@@ -142,6 +167,12 @@ namespace me.ewerestr.ewxtelegrambot.Utils
         public bool ContainsImage(string image)
         {
             return _unpostedImageList.Contains(image) ? true : (_postedImageList.Contains(image) ? true : false);
+        }
+
+        public bool IsEmpty()
+        {
+            if (GetAllMaterialsCount() > 0) return false;
+            return true;
         }
 
         public void Save()

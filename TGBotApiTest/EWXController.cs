@@ -19,8 +19,8 @@ namespace me.ewerestr.ewxtelegrambot
         [JsonIgnore]
         private EWXComponentStatus _status = EWXComponentStatus.WarmingUp;                  // common
 
-        [JsonIgnore]
-        private Thread _controllerThread;                                                   // controller
+        //[JsonIgnore]
+        //private Thread _controllerThread;                                                   // controller
         [JsonIgnore]
         private Thread _longpollThread;                                                     // longpoll
 
@@ -31,7 +31,7 @@ namespace me.ewerestr.ewxtelegrambot
         //private bool _serviceBool = false;
 
         public int _refreshCooldown { get; set; } = 15;                                     // controller
-        public int _deviation { get; set; } = 1;                                            // controller   / need to make def value
+        //public int _deviation { get; set; } = 1;                                            // controller   / need to make def value
         public int _timeout { get; set; } = 5;                                              // refresh delay (seconds)  ::  longpolltimeout
         [JsonIgnore]
         private int _invites = 0;                                                           // longpoll
@@ -112,7 +112,7 @@ namespace me.ewerestr.ewxtelegrambot
                 _allowController = false;
                 _allowLongpoll = false;
                 Thread.Sleep(1000);
-                if (_controllerThread != null) _controllerThread.Abort();
+                //if (_controllerThread != null) _controllerThread.Abort();
                 if (_longpollThread != null) _longpollThread.Abort();
                 EWXTelegramBot.PrintLine("Главный вычислительный модуль остановлен. Уничтожение компонента...");
                 EWXTelegramBot.PrintLine("Компонент уничтожен");
@@ -618,7 +618,6 @@ namespace me.ewerestr.ewxtelegrambot
                 status += "Component status: " + _status.ToString() + Environment.NewLine;
                 status += "Can the bot post again: " + (_postAgain ? "Yes" : "No") + Environment.NewLine;
                 status += "*Refresh cooldown: " + _refreshCooldown + Environment.NewLine;
-                status += "*Deviation: " + _deviation + Environment.NewLine;
                 status += "*Timeout: " + _timeout + Environment.NewLine;
                 status += "Current invites: " + _invites + Environment.NewLine;
                 status += "Current secretcode length: " + _secretLength + Environment.NewLine;
@@ -734,11 +733,6 @@ namespace me.ewerestr.ewxtelegrambot
         public void SetRefreshCooldown(int refreshCooldown)
         {
             _refreshCooldown = refreshCooldown;
-        }
-
-        public void SetDeviation(int deviation)
-        {
-            _deviation = deviation;
         }
 
         public void SetLongpollTimeout(int timeout)

@@ -47,6 +47,12 @@ namespace me.ewerestr.ewxtelegrambot.Components
                 string cmessage = null;
                 switch (cmd.GetCommand().ToLower())
                 {
+                    case "test":
+                        {
+                            if (from != null) cmessage = "OK!";
+                            else cmessage = "Ты в своем уме? Ты пишешь эту команду прямо, мать его, в командную строку!";
+                            break;
+                        }
                     case "start":
                         {
                             EWXTelegramBot.GetController().Start();
@@ -63,59 +69,6 @@ namespace me.ewerestr.ewxtelegrambot.Components
                         {
                             EWXTelegramBot.SaveAll();
                             cmessage = "Текущая конфигурация успешно сохранена!";
-                            break;
-                        }
-                    /*
-                    case "setposttime": // WILL BE DELETED
-                        {
-
-                            if (cmd.HasArguments())
-                            {
-                                if (cmd.GetArgumentsArray()[0].Contains(":"))
-                                {
-                                    string[] lStringArr = cmd.GetArgumentsArray()[0].Split(':');
-                                    byte[] time = new byte[2];
-                                    if (byte.TryParse(lStringArr[0], out time[0]) && byte.TryParse(lStringArr[1], out time[1]))
-                                    {
-                                        EWXTelegramBot.GetController().SetTimeToPost(time);
-                                        cmessage = "Успех! Новое время публикации установлено!";
-                                    }
-                                    else cmessage = "Некорректные аргументы команды. Пример: \"setPostTime 9:15\"";
-                                }
-                                else cmessage = "Некорректные аргументы команды. Пример: \"setPostTime 9:15\"";
-                            }
-                            else cmessage = "Программа должна иметь аргументы. Пример: \"setPostTime 9:15\"";
-                            break;
-                        }
-                    */
-                    case "setdeviation":
-                        {
-                            if (cmd.HasArguments())
-                            {
-                                int lInt;
-                                if (int.TryParse(cmd.GetArgumentsArray()[0], out lInt))
-                                {
-                                    EWXTelegramBot.GetController().SetDeviation(lInt);
-                                    cmessage = "Успех! Новый интервал погрешности установлен!";
-                                }
-                                else cmessage = "Некорректные аргументы команды. Пример: \"setDeviation 10\"";
-                            }
-                            else cmessage = "Команда должна иметь аргументы. Пример: \"setDeviation 10\"";
-                            break;
-                        }
-                    case "setrefreshcooldown":
-                        {
-                            if (cmd.HasArguments())
-                            {
-                                int lInt;
-                                if (int.TryParse(cmd.GetArgumentsArray()[0], out lInt))
-                                {
-                                    EWXTelegramBot.GetController().SetRefreshCooldown(lInt);
-                                    cmessage = "Успех! Новый интервал тактов главного модуля установлен!";
-                                }
-                                else cmessage = "Некорректные аргументы команды. Пример: \"setRefreshCooldown 60\"";
-                            }
-                            else cmessage = "Команда должна иметь аргументы. Пример: \"setRefreshCooldown 60\"";
                             break;
                         }
                     case "setlongpolltimeout":
@@ -208,7 +161,6 @@ namespace me.ewerestr.ewxtelegrambot.Components
                                     cmessage += "Новый интервал - " + w.Days + " дней " + w.Hours + " часов " + w.Minutes + " минут " + w.Seconds + " секунд. ";
                                     cmessage += "Расчет времени выполнен от " + (cmd.GetArgumentsCount() > 1 ? startPoint.ToString("G").Split(' ')[1] + " сегодняшнего дня. " : "момента выполнения команды. ");
                                     cmessage += "Следующая публикация запланирована на " + endPoint.ToString("G");
-                                    //EWXTelegramBot.GetController()._postInterval = nd; // WILL BE DELETED
                                 }
                             }
                             break;
@@ -270,6 +222,34 @@ namespace me.ewerestr.ewxtelegrambot.Components
                             cmessage = "Успех! Программа успешно синхронизировалась с сервисами Yandex!";
                             break;
                         }
+                    case "getdataholder":
+                        {
+                            EWXLocalData ld = EWXTelegramBot.GetLocalData();
+                            if (ld != null)
+                            {
+                                if (!ld.IsEmpty())
+                                {
+                                    cmessage = "Информация о текущем локальном хранилище:" + Environment.NewLine;
+                                    cmessage += "Всего материалов доступно: " + ld.GetAllMaterialsCount() + Environment.NewLine;
+                                    cmessage += "Всего изображений: " + ld.GetImagesCount() + Environment.NewLine;
+                                    cmessage += "Всего аудиозаписей: " + ld.GetAudiosCount() + Environment.NewLine;
+                                    cmessage += "Опубликованно изображений: " + ld.GetPostedImageList() + Environment.NewLine;
+                                    cmessage += "Опубликовано аудиозаписей: " + ld.GetPostedAudioList() + Environment.NewLine;
+                                    cmessage += "Неопубликованных изображений: " + ld.GetUnpostedImageList() + Environment.NewLine;
+                                    cmessage += "Неопубликованных аудиозаписей: " + ld.GetUnpostedAudioList();
+                                    if (from == null) cmessage = "#  #  #  #  #  #  #" + Environment.NewLine + cmessage + Environment.NewLine + "#  #  #  #  #  #  #  #";
+                                }
+                                else
+                                {
+                                    cmessage = "Локальное хранилище пусто";
+                                }
+                            }
+                            else
+                            {
+                                cmessage = "Локальное хранилище или пусто, или случилась непредвиденная ошибка. Проверьте локальную папку или свяжитесь с разработчиком";
+                            }
+                            break;
+                        }
                     case "getstatus":
                         {
                             cmessage = EWXTelegramBot.GetController().GetLiteStatus();
@@ -290,14 +270,6 @@ namespace me.ewerestr.ewxtelegrambot.Components
                             cmessage = "Упс... Эта команда временно недоступна, потому что программа-обновлятор еще не готова.";
                             break;
                         }
-                        /*
-                    case "reloadconfig":
-                        {
-                            EWXTelegramBot.GetController().LoadConfig(true);
-                            cmessage = "Configuration has been reloaded!";
-                            break;
-                        }
-                        */
                     case "allowpostagain":
                         {
                             EWXTelegramBot.GetController().SetPostAgain(true);
@@ -375,37 +347,159 @@ namespace me.ewerestr.ewxtelegrambot.Components
                         {
                             if (cmd.HasArguments())
                             {
-                                cmessage = "Упс... Эта возможность для команды \"help\" временно недоступна, так как еще не до конца реализована";
+                                switch (cmd.GetArgumentsArray()[0].ToLower())
+                                {
+                                    case "test":
+                                        {
+                                            cmessage = "Отладочная команда. Является тайной и служит лишь для проверки доступности программы. Если с доступом никаких проблем не выявлено - в ответ придет сообщение с текстом \"ОК!\"";
+                                            break;
+                                        }
+                                    case "start":
+                                        {
+                                            cmessage = "start - Команда для ручного запуска главного вычислительного модуля. Обычно используется только при первом запуске, так как после первого запуска программа не знает токенов Телеграм-бота и Яндекс, поэтому ей некуда обращаться и вычислительный модуль при любом действии будет возвращать ошибку. Также команда может быть полезна в случае ошибки автозапуска модуля, но вероятность такого без внешнего вмешательства практически нулевая.";
+                                            break;
+                                        }
+                                    case "stop":
+                                        {
+                                            cmessage = "stop - Команда для принудительной остановки выполенния программы. Используется в основном перед перезагрузкой сервера. При выполнении команды происходит форсированные дамп логов и сохранение текущего состояния всех модулей программы.";
+                                            break;
+                                        }
+                                    case "saveall":
+                                        {
+                                            cmessage = "saveAll - Команда для принудительного сохранения текущего состояния всех модулей программы. Будет полезна тем, кто чувствует надвигающиеся неполадки.";
+                                            break;
+                                        }
+                                    case "setlongpolltimeout":
+                                        {
+                                            cmessage = "setLongpollTimeout - Команда, устанавливающая в секундах частоту опроса серверов Телеграм на предмет наличия новых сообщений от администраторов. Не трогайте эту команду если вы не знаете, что делаете.";
+                                            break;
+                                        }
+                                    case "settelegramtoken":
+                                        {
+                                            cmessage = "setTelegramToken - Команда для подключения к ней профиля Телеграм-бота. Принимает один параметр - токен. Токен можно получить у бота, который создает ботов (@BotFather), приношу извинения за тавтологию. Пример использования команды: \"setTelegramToken 1234567890:AAAbbb-CCCddd-EEEfffGGG-hhh-XXXzzzL\"";
+                                            break;
+                                        }
+                                    case "setsecretlength":
+                                        {
+                                            cmessage = "setSecretLength - Команда, задающая длину секретного кода авторизации. Команда принимает один целочисленный параметр - число от 10 до 128. Пример использования команды: \"setSecretLength 64\"";
+                                            break;
+                                        }
+                                    case "generatesecret":
+                                        {
+                                            cmessage = "generateSecret - Команда, генерирующая секретный код авторизации для пользователя. Используется для получения доступа к функционалу программы через личные сообщения боту. Сгенерированный код необходимо отправить боту личным сообщением, если код действителен - программа сообщит об этом.";
+                                            break;
+                                        }
+                                    case "invite":
+                                        {
+                                            cmessage = "invite - Команда, запускающая слушатель добавления в канал\\группу. Выполнив эту команду программа начинает отслеживать все добавления в каналы и группы. После обнаружения добавления программа авторизует ресурс и в дальнейшем будет отправлять в него свои публикации. Команда нужна для защиты от неверных публикаций, ведь добавить бота в канал или группу может абсолютно любой пользователь, но программа не должна делиться своим контентом со всеми.";
+                                            break;
+                                        }
+                                    case "forcepost":
+                                        {
+                                            cmessage = "forcePost - Команда, выполняющая моментальную внеплановую публикацию, не влияя тем самым на изначальный график публикаций. Была добавлена для тестирования функционала, но оставлена, так как может быть полезна в некоторых ситуациях.";
+                                            break;
+                                        }
+                                    case "authyandex":
+                                        {
+                                            cmessage = "authYandex - Команда, вызывающая окно авторизации в сервисах Яндекс. Данную команду можно выполнять только из командной строки, из личных сообщений боту выполнять ее не имеет никакого смысла. После выполнения откроется страница в браузере, в которой следует войти в аккаунт Яндекс и предоставить программе запрошенные разрешения, после чего начнется исследование облачного хранилища Яндекс на наличие необходимых материалов. Под объектив программы попадает только папка \"EWXTelegramBot\" в корневой папке облачного хранилища.";
+                                            break;
+                                        }
+                                    case "forcesync":
+                                        {
+                                            cmessage = "forceSync - Команда, запускающая немедленную синхронизацию с облачным хранилищем Яндекс. Используется для подгрузки новых материалов вне графика. Команду следует выполнять только после авторизации программы в сервисах яндекса. В ином случае программа оповестит, что действие невозможно.";
+                                            break;
+                                        }
+                                    case "getdataholder":
+                                        {
+                                            cmessage = "getDataHolder - Команда, генерирующая краткий отчет о синхронизированных на момент выполнения материалах в локальном хранилище. Информацию о количестве опубликованных материалов, неопубликованных и общие суммы.";
+                                            break;
+                                        }
+                                    case "getupdates":
+                                        {
+                                            cmessage = "";
+                                            break;
+                                        }
+                                    case "installupdates":
+                                        {
+                                            cmessage = "";
+                                            break;
+                                        }
+                                    case "eraseconfig":
+                                        {
+                                            cmessage = "";
+                                            break;
+                                        }
+                                    case "eraselogs":
+                                        {
+                                            cmessage = "";
+                                            break;
+                                        }
+                                    case "eraseaudios":
+                                        {
+                                            cmessage = "";
+                                            break;
+                                        }
+                                    case "eraseimages":
+                                        {
+                                            cmessage = "";
+                                            break;
+                                        }
+                                    case "eraselocalfolder":
+                                        {
+                                            cmessage = "";
+                                            break;
+                                        }
+                                    case "erasedatafolder":
+                                        {
+                                            cmessage = "";
+                                            break;
+                                        }
+                                    case "restartlogger":
+                                        {
+                                            cmessage = "";
+                                            break;
+                                        }
+                                    case "help":
+                                        {
+                                            cmessage = "";
+                                            break;
+                                        }
+                                    default:
+                                        {
+                                            cmessage = "Ой, кажется в базе данных Помощника нет информации о такой команде, как \"" + cmd.GetCommand() + "\". Убедитесь, верно ли вы ее ввели";
+                                            break;
+                                        }
+                                }
                                 break;
                             }
-                            cmessage = "Список доступных команд:" + Environment.NewLine;
-                            cmessage += "start - Запустить главный вычислительный модуль бота, если он не запустился автоматически" + Environment.NewLine;
-                            cmessage += "stop - Остановить выполнение программы сервера, данные сохранятся перед завершением работы" + Environment.NewLine;
-                            cmessage += "saveAll - Сохранить текущую конфигурацию" + Environment.NewLine;
-                            cmessage += "setPostTime - Установить время публикации" + Environment.NewLine;
-                            cmessage += "setDeviation - Установить максимальную погрешность времени публикации" + Environment.NewLine;
-                            cmessage += "setRefreshCooldown - Установить задержку между тактами главного цикла" + Environment.NewLine;
-                            cmessage += "setLongpollTimeout - Установить интервал опроса LongPoll сервера Telegram" + Environment.NewLine;
-                            cmessage += "setSecretLength - Установить длину секретного кода" + Environment.NewLine;
-                            cmessage += "generateSecret - Сгенерировать секретный код добавления администратора" + Environment.NewLine;
-                            cmessage += "generateChannelSecret - Сгенерировать секретный код добавления канала" + Environment.NewLine;
-                            cmessage += "setInvites - Установить количество приглашений" + Environment.NewLine;
-                            cmessage += "forcePost - Немедленная публикация" + Environment.NewLine;
-                            cmessage += "forceSync - Немедленная синхронизация данных с Yandex" + Environment.NewLine;
-                            cmessage += "getStatus - Отобразить текущий статус" + Environment.NewLine;
-                            cmessage += "getDetStatus - Отобразить текущий статус в деталях" + Environment.NewLine;
-                            cmessage += "getUpdates - Проверить наличие обновлений" + Environment.NewLine;
-                            cmessage += "allowPostAgain - Разрешить использовать материалы повторно" + Environment.NewLine;
-                            cmessage += "denyPostAgain - Запретить использовать материалы повторно" + Environment.NewLine;
-                            cmessage += "eraseConfig - Очистить файл конфигурации (Deprecated)" + Environment.NewLine;
-                            cmessage += "eraseAudios - Очистить локальную папку аудиозаписей (Deprecated)" + Environment.NewLine;
-                            cmessage += "eraseImages - Очистить локальную папку изображений (Deprecated)" + Environment.NewLine;
-                            cmessage += "eraseLocalFolder - Очистить локальное хранилище данных (Deprecated)" + Environment.NewLine;
-                            cmessage += "eraseDataFolder - Очистить папку данных всей программы (Warning, deprecated)" + Environment.NewLine;
-                            cmessage += "restartLogger - Перезагрузить логгер" + Environment.NewLine;
-                            cmessage += "test - Сервисная команда. Если в ответ сервер вернет \"OK!\", значит что программа активна" + Environment.NewLine;
-                            cmessage += "help - Отобразить информацию о командах" + Environment.NewLine;
-                            cmessage += "Для получения более детальной информации по конкретной команде используйте \"help <command>\". Пример \"help forcePost\"";
+                            else
+                            {
+                                cmessage = "Список доступных команд:" + Environment.NewLine;
+                                cmessage += "start - Запустить главный вычислительный модуль бота, если он не запустился автоматически" + Environment.NewLine;
+                                cmessage += "stop - Остановить выполнение программы сервера, данные сохранятся перед завершением работы" + Environment.NewLine;
+                                cmessage += "saveAll - Сохранить текущую конфигурацию" + Environment.NewLine;
+                                cmessage += "setPostInterval - Установить временной интервал между публикациями" + Environment.NewLine;
+                                cmessage += "setLongpollTimeout - Установить интервал опроса LongPoll сервера Telegram" + Environment.NewLine;
+                                cmessage += "setSecretLength - Установить длину секретного кода" + Environment.NewLine;
+                                cmessage += "generateSecret - Сгенерировать секретный код добавления администратора" + Environment.NewLine;
+                                cmessage += "generateChannelSecret - Сгенерировать секретный код добавления канала" + Environment.NewLine;
+                                cmessage += "setInvites - Установить количество приглашений" + Environment.NewLine;
+                                cmessage += "forcePost - Немедленная публикация" + Environment.NewLine;
+                                cmessage += "forceSync - Немедленная синхронизация данных с Yandex" + Environment.NewLine;
+                                cmessage += "getStatus - Отобразить текущий статус" + Environment.NewLine;
+                                cmessage += "getDetStatus - Отобразить текущий статус в деталях" + Environment.NewLine;
+                                cmessage += "getUpdates - Проверить наличие обновлений" + Environment.NewLine;
+                                cmessage += "allowPostAgain - Разрешить использовать материалы повторно" + Environment.NewLine;
+                                cmessage += "denyPostAgain - Запретить использовать материалы повторно" + Environment.NewLine;
+                                cmessage += "eraseConfig - Очистить файл конфигурации (Deprecated)" + Environment.NewLine;
+                                cmessage += "eraseAudios - Очистить локальную папку аудиозаписей (Deprecated)" + Environment.NewLine;
+                                cmessage += "eraseImages - Очистить локальную папку изображений (Deprecated)" + Environment.NewLine;
+                                cmessage += "eraseLocalFolder - Очистить локальное хранилище данных (Deprecated)" + Environment.NewLine;
+                                cmessage += "eraseDataFolder - Очистить папку данных всей программы (Warning, deprecated)" + Environment.NewLine;
+                                cmessage += "restartLogger - Перезагрузить логгер" + Environment.NewLine;
+                                cmessage += "help - Отобразить информацию о командах" + Environment.NewLine;
+                                cmessage += "Для получения более детальной информации по конкретной команде используйте \"help <command>\". Пример \"help forcePost\"";
+                            }
                             break;
                         }
                     default:
