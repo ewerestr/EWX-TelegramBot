@@ -361,7 +361,7 @@ namespace me.ewerestr.ewxtelegrambot
         private void SendPostReport()
         {
             string report = "Публикация выполнена!" + Environment.NewLine;
-            report += "Следующая публикация запланирована на " + (new DateTime(_nextPostDate[0], _nextPostDate[1], _nextPostDate[2], _nextPostDate[3], _nextPostDate[4], 0).ToString("G") + Environment.NewLine;
+            report += "Следующая публикация запланирована на " + (new DateTime(_nextPostDate[0], _nextPostDate[1], _nextPostDate[2], _nextPostDate[3], _nextPostDate[4], 0).ToString("G")) + Environment.NewLine;
             report += "Остаток неиспользованных изображений: " + localdata.GetUnpostedImageList().Count + Environment.NewLine;
             report += "Остаток неиспользованных аудиозаписей: " + localdata.GetUnpostedAudioList().Count + Environment.NewLine;
             SendMessage(report);
