@@ -549,6 +549,7 @@ namespace me.ewerestr.ewxtelegrambot
                 audio = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder" + Path.DirectorySeparatorChar + "audios" + Path.DirectorySeparatorChar + audio;
                 SendPhoto(photo);
                 SendAudio(audio);
+                localdata.Save();
                 SendPostReport();
                 //_lastPostDate = DateTime.Now.ToString("G").Split(' ')[0];  // LEGACY
                 //EWXTelegramBot.PrintLine("[EWXController] The post has been successfuly delegated to TelegramInstance);
