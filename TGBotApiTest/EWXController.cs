@@ -1,4 +1,5 @@
-﻿using me.ewerestr.ewxtelegrambot.Responses;
+﻿using Id3;
+using me.ewerestr.ewxtelegrambot.Responses;
 using me.ewerestr.ewxtelegrambot.Utils;
 using System;
 using System.Collections.Generic;
@@ -320,7 +321,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
         }
 
-        public void SendAudio(string filePath)
+        public void SendAudio(string filePath, string tag = null)
         {
             try
             {
@@ -343,7 +344,7 @@ namespace me.ewerestr.ewxtelegrambot
                     {
                         using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                         {
-                            form.Add(new StreamContent(fileStream), "audio", Path.GetFileName(filePath));
+                            form.Add(new StreamContent(fileStream), "audio", string.IsNullOrEmpty(tag) ? Path.GetFileName(filePath).Replace(".mp3", "").Replace(".MP3", "") : tag);
                             using (var client = new HttpClient())
                             {
                                 rawResponse = client.PostAsync(builder.BuildRequest(), form).Result.ToString();
@@ -487,7 +488,7 @@ namespace me.ewerestr.ewxtelegrambot
         }
 
         // configuration / datafolder interract
-
+        /*
         private void ScanLocalFolders()
         {
             try
@@ -514,6 +515,7 @@ namespace me.ewerestr.ewxtelegrambot
                 EWXTelegramBot.StackTrace(this.GetType().Name, "ScanLocalFolders", e.GetType().ToString(), e.Message, e.StackTrace);
             }
         }
+        */
 
         // local utils
         public bool Post()
@@ -523,6 +525,8 @@ namespace me.ewerestr.ewxtelegrambot
                 //localdata = EWXTelegramBot.GetLocalData();
                 string photo;
                 string audio;
+                string artist = null;
+                string title = null;
                 Random random = new Random();
                 if (localdata.HasUnpostedImages()) photo = localdata.GetRandomImage();
                 else if (_postAgain)
@@ -547,8 +551,16 @@ namespace me.ewerestr.ewxtelegrambot
                 }
                 photo = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder" + Path.DirectorySeparatorChar + "images" + Path.DirectorySeparatorChar + photo;
                 audio = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder" + Path.DirectorySeparatorChar + "audios" + Path.DirectorySeparatorChar + audio;
+                using (Mp3 mp3 = new Mp3(audio))
+                {
+                    Id3Tag tag = mp3.GetTag(Id3TagFamily.Version2X);
+                    if (!string.IsNullOrEmpty(tag.Artists)) artist = tag.Artists;
+                    if (!string.IsNullOrEmpty(tag.Title)) title = tag.Title;
+                }
                 SendPhoto(photo);
-                SendAudio(audio);
+                //SendAudio(audio);
+                if (!string.IsNullOrEmpty(artist) && !string.IsNullOrEmpty(title)) SendAudio(audio, artist + " - " + title);
+                else SendAudio(audio);
                 localdata.Save();
                 SendPostReport();
                 //_lastPostDate = DateTime.Now.ToString("G").Split(' ')[0];  // LEGACY

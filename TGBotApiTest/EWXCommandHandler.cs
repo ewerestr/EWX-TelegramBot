@@ -29,8 +29,11 @@ namespace me.ewerestr.ewxtelegrambot.Components
                 while (_allowListen)
                 {
                     string line = Console.ReadLine();
-                    EWXCommand cmd = new EWXCommand(line);
-                    HandleCommand(cmd);
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        EWXCommand cmd = new EWXCommand(line);
+                        HandleCommand(cmd);
+                    }
                 }
             }
             catch (Exception e)
@@ -233,10 +236,10 @@ namespace me.ewerestr.ewxtelegrambot.Components
                                     cmessage += "Всего материалов доступно: " + ld.GetAllMaterialsCount() + Environment.NewLine;
                                     cmessage += "Всего изображений: " + ld.GetImagesCount() + Environment.NewLine;
                                     cmessage += "Всего аудиозаписей: " + ld.GetAudiosCount() + Environment.NewLine;
-                                    cmessage += "Опубликованно изображений: " + ld.GetPostedImageList() + Environment.NewLine;
-                                    cmessage += "Опубликовано аудиозаписей: " + ld.GetPostedAudioList() + Environment.NewLine;
-                                    cmessage += "Неопубликованных изображений: " + ld.GetUnpostedImageList() + Environment.NewLine;
-                                    cmessage += "Неопубликованных аудиозаписей: " + ld.GetUnpostedAudioList();
+                                    cmessage += "Опубликованно изображений: " + ld.GetPostedImageList().Count + Environment.NewLine;
+                                    cmessage += "Опубликовано аудиозаписей: " + ld.GetPostedAudioList().Count + Environment.NewLine;
+                                    cmessage += "Неопубликованных изображений: " + ld.GetUnpostedImageList().Count + Environment.NewLine;
+                                    cmessage += "Неопубликованных аудиозаписей: " + ld.GetUnpostedAudioList().Count;
                                     if (from == null) cmessage = "#  #  #  #  #  #  #" + Environment.NewLine + cmessage + Environment.NewLine + "#  #  #  #  #  #  #  #";
                                 }
                                 else
