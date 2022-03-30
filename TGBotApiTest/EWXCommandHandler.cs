@@ -6,6 +6,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
     class EWXCommandHandler
     {
         private bool _allowListen = false;
+        private bool _debug = false;
         // private bool _postFlag = false;
 
         // entry block
@@ -180,24 +181,15 @@ namespace me.ewerestr.ewxtelegrambot.Components
                             cmessage = "Новый секретный код канала сгенерирован: " + s;
                             break;
                         }
-                    case "setinvites":
+                    case "invite":
                         {
-                            if (cmd.HasArguments())
-                            {
-                                int lInt;
-                                if (int.TryParse(cmd.GetArgumentsArray()[0], out lInt))
-                                {
-                                    EWXTelegramBot.GetController().SetInvitesCount(lInt);
-                                    cmessage = "Количество допустимых приглашений установлено на " + lInt;
-                                }
-                                else cmessage = "Некорректные аргументы команды. Аргумент должен быть числом. Пример: \"setInvites 2\"";
-                            }
-                            else cmessage = "Команда должна иметь аргументы. Пример: \"setInvites 2\"";
+                            EWXTelegramBot.GetController().Invite();
+                            cmessage = "Приглашение активировано!";
                             break;
                         }
                     case "forcepost": // deprecated
                         {
-                            if (EWXTelegramBot.GetController().GetStatus().Equals(EWXComponentStatus.Working))
+                            if (EWXTelegramBot.GetController().IsWorking())
                             {
                                 if (EWXTelegramBot.GetController().HasPeers())
                                 {
@@ -225,6 +217,12 @@ namespace me.ewerestr.ewxtelegrambot.Components
                             cmessage = "Успех! Программа успешно синхронизировалась с сервисами Yandex!";
                             break;
                         }
+                    case "forcedump":
+                        {
+                            EWXTelegramBot.GetLogger().ForceDump();
+                            cmessage = "Успех! Дамп лога выгружен";
+                            break;
+                        }
                     case "getdataholder":
                         {
                             EWXLocalData ld = EWXTelegramBot.GetLocalData();
@@ -236,7 +234,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
                                     cmessage += "Всего материалов доступно: " + ld.GetAllMaterialsCount() + Environment.NewLine;
                                     cmessage += "Всего изображений: " + ld.GetImagesCount() + Environment.NewLine;
                                     cmessage += "Всего аудиозаписей: " + ld.GetAudiosCount() + Environment.NewLine;
-                                    cmessage += "Опубликованно изображений: " + ld.GetPostedImageList().Count + Environment.NewLine;
+                                    cmessage += "Опубликовано изображений: " + ld.GetPostedImageList().Count + Environment.NewLine;
                                     cmessage += "Опубликовано аудиозаписей: " + ld.GetPostedAudioList().Count + Environment.NewLine;
                                     cmessage += "Неопубликованных изображений: " + ld.GetUnpostedImageList().Count + Environment.NewLine;
                                     cmessage += "Неопубликованных аудиозаписей: " + ld.GetUnpostedAudioList().Count;
@@ -486,7 +484,7 @@ namespace me.ewerestr.ewxtelegrambot.Components
                                 cmessage += "setSecretLength - Установить длину секретного кода" + Environment.NewLine;
                                 cmessage += "generateSecret - Сгенерировать секретный код добавления администратора" + Environment.NewLine;
                                 cmessage += "generateChannelSecret - Сгенерировать секретный код добавления канала" + Environment.NewLine;
-                                cmessage += "setInvites - Установить количество приглашений" + Environment.NewLine;
+                                cmessage += "invite - Активировать слушатель приглашений" + Environment.NewLine;
                                 cmessage += "forcePost - Немедленная публикация" + Environment.NewLine;
                                 cmessage += "forceSync - Немедленная синхронизация данных с Yandex" + Environment.NewLine;
                                 cmessage += "getStatus - Отобразить текущий статус" + Environment.NewLine;

@@ -17,25 +17,26 @@ namespace me.ewerestr.ewxtelegrambot
     public class EWXController
     {
         // vars block
-        [JsonIgnore]
-        private EWXComponentStatus _status = EWXComponentStatus.WarmingUp;                  // common
-
         //[JsonIgnore]
-        //private Thread _controllerThread;                                                   // controller
+        //private EWXComponentStatus _status = EWXComponentStatus.WarmingUp;                  // common
+
+
         [JsonIgnore]
         private Thread _longpollThread;                                                     // longpoll
 
         public bool _postAgain { get; set; } = false;                                       // controller
-        public bool _allowController { get; set; } = false;                                 // controller
+        public bool _working { get; set; } = false;
+        //public bool _allowController { get; set; } = false;                                 // controller
         public bool _allowLongpoll { get; set; } = false;                                   // longpoll
-        //private bool _saveAfterPost = true;                                               // controller
-        //private bool _serviceBool = false;
+        private bool _invite = false;
+        [JsonIgnore]
+        private bool _debug = false; 
+        /* _saveAfterPost */
 
         public int _refreshCooldown { get; set; } = 15;                                     // controller
-        //public int _deviation { get; set; } = 1;                                            // controller   / need to make def value
         public int _timeout { get; set; } = 5;                                              // refresh delay (seconds)  ::  longpolltimeout
-        [JsonIgnore]
-        private int _invites = 0;                                                           // longpoll
+        //[JsonIgnore]
+        //private int _invites = 0;                                                           // longpoll
         public int _secretLength { get; set; } = 32;
         public int _syncCooldown { get; set; } = 60;
         public int[] _nextPostDate { get; set; } = { DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.AddDays(1).Day, DateTime.Now.Hour, DateTime.Now.Minute, 0 };
@@ -62,9 +63,6 @@ namespace me.ewerestr.ewxtelegrambot
         // entry block
         public EWXController()
         {
-            _status = EWXComponentStatus.WarmingUp;
-            //init();
-            //ScanLocalFolders();
             EWXTelegramBot.PrintLine("Главный вычислительный модуль инициализирован. Подготовка к запуску...");
         }
 
@@ -74,7 +72,7 @@ namespace me.ewerestr.ewxtelegrambot
         {
             try
             {
-                if (_status.Equals(EWXComponentStatus.Working))
+                if (_working)
                 {
                     EWXTelegramBot.PrintLine("Компонент уже запущен");
                     return;
@@ -90,14 +88,13 @@ namespace me.ewerestr.ewxtelegrambot
                 else { /* Notify user */ }
                 CheckTime();
                 EWXTelegramBot.PrintLine("Программа получила команду на запуск. Запуск главного вычислительного модуля...");
-                _allowController = true;
                 _allowLongpoll = true;
-                _status = EWXComponentStatus.Working;
+                //_status = EWXComponentStatus.Working;
                 _longpollThread = new Thread(Longpoll);
                 //_controllerThread = new Thread(Controller);   // LEGACY //// WILL BE DELETED
                 _longpollThread.Start();
                 //_controllerThread.Start();
-                if (_telegramPeers.Count == 0) EWXTelegramBot.PrintLine("Внимание! Список получателей пуст. Добавьте получателей при помощи команд \"generatechannelsecret\" или \"setinvites <number>\"");
+                if (_telegramPeers.Count == 0) EWXTelegramBot.PrintLine("Внимание! Список получателей пуст. Добавьте получателей при помощи команды \"invite\"");
             }
             catch (Exception e)
             {
@@ -110,10 +107,8 @@ namespace me.ewerestr.ewxtelegrambot
             try
             {
                 EWXTelegramBot.PrintLine("Выполнение программы остановлено. Прерывание потоков модулей...");
-                _allowController = false;
                 _allowLongpoll = false;
                 Thread.Sleep(1000);
-                //if (_controllerThread != null) _controllerThread.Abort();
                 if (_longpollThread != null) _longpollThread.Abort();
                 EWXTelegramBot.PrintLine("Главный вычислительный модуль остановлен. Уничтожение компонента...");
                 EWXTelegramBot.PrintLine("Компонент уничтожен");
@@ -203,7 +198,7 @@ namespace me.ewerestr.ewxtelegrambot
                                         }
                                     }
                                 }
-                                if (_invites > 0)
+                                if (_invite)
                                 {
                                     if (item.my_chat_member != null)
                                     {
@@ -213,7 +208,7 @@ namespace me.ewerestr.ewxtelegrambot
                                             {
                                                 _telegramPeers.Add(item.my_chat_member.chat.id.ToString());
                                                 EWXTelegramBot.PrintLine("Канал " + item.my_chat_member.chat.title + " добавлен в список получателей по приглашению");
-                                                _invites--;
+                                                _invite = false;
                                             }
                                         }
                                     }
@@ -321,7 +316,7 @@ namespace me.ewerestr.ewxtelegrambot
             }
         }
 
-        public void SendAudio(string filePath, string tag = null)
+        public void SendAudio(string filePath, string tag)
         {
             try
             {
@@ -344,7 +339,7 @@ namespace me.ewerestr.ewxtelegrambot
                     {
                         using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                         {
-                            form.Add(new StreamContent(fileStream), "audio", string.IsNullOrEmpty(tag) ? Path.GetFileName(filePath).Replace(".mp3", "").Replace(".MP3", "") : tag);
+                            form.Add(new StreamContent(fileStream), "audio", tag);
                             using (var client = new HttpClient())
                             {
                                 rawResponse = client.PostAsync(builder.BuildRequest(), form).Result.ToString();
@@ -362,7 +357,7 @@ namespace me.ewerestr.ewxtelegrambot
         private void SendPostReport()
         {
             string report = "Публикация выполнена!" + Environment.NewLine;
-            report += "Следующая публикация запланирована на " + (new DateTime(_nextPostDate[0], _nextPostDate[1], _nextPostDate[2], _nextPostDate[3], _nextPostDate[4], 0).ToString("G")) + Environment.NewLine;
+            report += "Следующая публикация запланирована на " + GetNextPostDate().Add(GetPostIntervalAsTimeSpan()).ToString("G") + Environment.NewLine;
             report += "Остаток неиспользованных изображений: " + localdata.GetUnpostedImageList().Count + Environment.NewLine;
             report += "Остаток неиспользованных аудиозаписей: " + localdata.GetUnpostedAudioList().Count + Environment.NewLine;
             SendMessage(report);
@@ -383,7 +378,7 @@ namespace me.ewerestr.ewxtelegrambot
                         if (string.IsNullOrEmpty(token))
                         {
                             EWXTelegramBot.PrintLine("Сохраненный ранее Telegram токен прошел валидацию");
-                            _status = EWXComponentStatus.ReadyToWork;
+                            //_status = EWXComponentStatus.ReadyToWork;
                             _telegramToken = token;
                         }
                         return response.result.username;
@@ -393,7 +388,7 @@ namespace me.ewerestr.ewxtelegrambot
                         if (string.IsNullOrEmpty(token))
                         {
                             EWXTelegramBot.PrintLine("Сохраненный ранее Telegram токен не прошел валидацию. Укажите актуальный токен при помощи команды \"setTelegramToken\"");
-                            _status = EWXComponentStatus.Error;
+                            //_status = EWXComponentStatus.Error;
                         }
                     }
                 }
@@ -404,6 +399,45 @@ namespace me.ewerestr.ewxtelegrambot
                 EWXTelegramBot.StackTrace(this.GetType().Name, "TestTelegramToken", e.GetType().ToString(), e.Message, e.StackTrace, ("token=\"" + token + "\""));
             }
             return null;
+        }
+
+        public void TestPeersConnection()
+        {
+            List<string> disable = new List<string>();
+            foreach (string peer in _telegramPeers)
+            {
+                if (!IsBotInChannel(peer))
+                {
+                    EWXTelegramBot.PrintLine("[" + peer + "] " + _error);
+                    disable.Add(peer);
+                }
+            }
+            if (disable.Count == _telegramPeers.Count)
+            {
+                _telegramPeers.Clear();
+                EWXTelegramBot.StopTimer();
+                EWXTelegramBot.PrintLine("Выполнение основного функционала приостановлено, так как бот был кикнут из канала(ов) и список получателей теперь пуст. Работа возобновится, когда будет добавлен хотя бы один получатель");
+            }
+            else if (disable.Count > 0) foreach (string peer0 in disable) _telegramPeers.Remove(peer0);
+        }
+
+        private bool IsBotInChannel(string chatid)
+        {
+            string request = new EWXRequestBuilder(EWXTelegramBot.GetTelegramAPI() + _telegramToken).SetMethod("getChat").AddParameter("chat_id", chatid).BuildRequest();
+            TelegramGetChat response = JsonSerializer.Deserialize<TelegramGetChat>(EWXTelegramBot.SendRequest(request));
+            if (response.ok)
+            {
+                if (chatid == response.id.ToString()) return true;
+            }
+            else
+            {
+                if (response.error_code == 403)
+                {
+                    _error = "Бот был кикнут из канала или группы";
+                    return false;
+                }
+            }
+            return false;
         }
 
         // yandex interract
@@ -525,8 +559,6 @@ namespace me.ewerestr.ewxtelegrambot
                 //localdata = EWXTelegramBot.GetLocalData();
                 string photo;
                 string audio;
-                string artist = null;
-                string title = null;
                 Random random = new Random();
                 if (localdata.HasUnpostedImages()) photo = localdata.GetRandomImage();
                 else if (_postAgain)
@@ -551,16 +583,11 @@ namespace me.ewerestr.ewxtelegrambot
                 }
                 photo = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder" + Path.DirectorySeparatorChar + "images" + Path.DirectorySeparatorChar + photo;
                 audio = EWXTelegramBot.GetDataFolder() + Path.DirectorySeparatorChar + "localdataholder" + Path.DirectorySeparatorChar + "audios" + Path.DirectorySeparatorChar + audio;
-                using (Mp3 mp3 = new Mp3(audio))
-                {
-                    Id3Tag tag = mp3.GetTag(Id3TagFamily.Version2X);
-                    if (!string.IsNullOrEmpty(tag.Artists)) artist = tag.Artists;
-                    if (!string.IsNullOrEmpty(tag.Title)) title = tag.Title;
-                }
+                string tag = EWXTelegramBot.ParseTags(audio);
                 SendPhoto(photo);
-                //SendAudio(audio);
-                if (!string.IsNullOrEmpty(artist) && !string.IsNullOrEmpty(title)) SendAudio(audio, artist + " - " + title);
-                else SendAudio(audio);
+                SendAudio(audio, tag);
+                /*if (!string.IsNullOrEmpty(artist) && !string.IsNullOrEmpty(title)) SendAudio(audio, artist + " - " + title);
+                else SendAudio(audio);*/
                 localdata.Save();
                 SendPostReport();
                 //_lastPostDate = DateTime.Now.ToString("G").Split(' ')[0];  // LEGACY
@@ -609,7 +636,7 @@ namespace me.ewerestr.ewxtelegrambot
             string status = "# # # # PRINTSTATUS START # # # #" + Environment.NewLine;
             try
             {
-                status += "Component status: " + _status.ToString() + Environment.NewLine;
+                //status += "Component status: " + _status.ToString() + Environment.NewLine;
                 //status += "Posted materials: Images :> " + _postedPhotos.Count + " :: Audios :> " + _postedAudios.Count + Environment.NewLine;
                 //status += "Unposted materials: Images :> " + _unpostedPhotoList.Count + " :: Audios :> " + _unpostedAudioList.Count + Environment.NewLine;
                 // status += "Last post date: " + _lastPostDate + Environment.NewLine; // LEGACY
@@ -628,11 +655,11 @@ namespace me.ewerestr.ewxtelegrambot
             string status = "# # # # PRINTDETSTATUS START # # # #" + Environment.NewLine;
             try
             {
-                status += "Component status: " + _status.ToString() + Environment.NewLine;
+                //status += "Component status: " + _status.ToString() + Environment.NewLine;
                 status += "Can the bot post again: " + (_postAgain ? "Yes" : "No") + Environment.NewLine;
                 status += "*Refresh cooldown: " + _refreshCooldown + Environment.NewLine;
                 status += "*Timeout: " + _timeout + Environment.NewLine;
-                status += "Current invites: " + _invites + Environment.NewLine;
+                //status += "Current invites: " + _invites + Environment.NewLine;
                 status += "Current secretcode length: " + _secretLength + Environment.NewLine;
                 status += "*Sync cooldown: " + _syncCooldown + Environment.NewLine;
                 status += "Current longpoll offset: " + _offset + Environment.NewLine;
@@ -703,10 +730,17 @@ namespace me.ewerestr.ewxtelegrambot
         }
 
         // get/set block
+        public bool IsWorking()
+        {
+            return _working;
+        }
+
+        /*
         public EWXComponentStatus GetStatus()
         {
             return _status;
         }
+        */
 
         public int[] GetPostInterval()
         {
@@ -753,6 +787,17 @@ namespace me.ewerestr.ewxtelegrambot
             _timeout = timeout;
         }
 
+        public void Invite()
+        {
+            _invite = true;
+        }
+
+        public void Deinvite()
+        {
+            _invite = false;
+        }
+
+        /*
         public void SetInvitesCount(int invites)
         {
             _invites = invites;
@@ -762,6 +807,7 @@ namespace me.ewerestr.ewxtelegrambot
         {
             _invites = 0;
         }
+        */
 
         public void SetTelegramToken(string telegramToken)
         {

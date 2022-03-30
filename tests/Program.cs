@@ -1,4 +1,9 @@
-﻿using System;
+﻿using GroupDocs.Metadata;
+using GroupDocs.Metadata.Formats.Audio;
+using GroupDocs.Metadata.Tagging;
+using System;
+using System.IO;
+using System.Net;
 using System.Threading;
 
 namespace tests
@@ -7,7 +12,26 @@ namespace tests
     {
         static void Main(string[] args)
         {
-            Print(new string[] { "1d1h1m10s"});
+            string audio = @"C:\usr\audios\Avril Lavigne - My Happy Ending.mp3";
+            string path = @"C:\usr\audios";
+            string[] files = Directory.GetFiles(path);
+
+            foreach (string file in files)
+            {
+                var tag = TagLib.File.Create(file);
+                if (tag.Tag.FirstAlbumArtist != null) Console.Write(tag.Tag.FirstAlbumArtist);
+                else if (tag.Tag.FirstArtist != null) Console.Write(tag.Tag.FirstArtist);
+                else if (tag.Tag.FirstPerformer != null) Console.Write(tag.Tag.FirstPerformer);
+                Console.Write(" - ");
+                if (tag.Tag.Title != null) Console.WriteLine(tag.Tag.Title);
+            }
+
+
+                    string token = "";
+            string request = "https://api.telegram.org/bot" + token + "/getChat?chat_id=-1001736794065";
+            string response = SendRequest(request);
+            Console.WriteLine(response);
+            Console.ReadKey();
         }
 
         public static void Print(string[] args)
@@ -81,6 +105,33 @@ namespace tests
                 Console.WriteLine(e.Message);
             }
             return lReturn;
+        }
+
+        public static string SendRequest(string link, string yandexToken = null, string method = null)
+        {
+            Thread.Sleep(100);
+            string web_response;
+            try
+            {
+                WebRequest request = WebRequest.Create(link);
+                if (!string.IsNullOrEmpty(yandexToken)) request.Headers.Add("Authorization", "OAuth " + yandexToken);
+                request.Credentials = CredentialCache.DefaultCredentials;
+                if (!string.IsNullOrEmpty(method)) request.Method = method;
+                WebResponse response = request.GetResponse();
+                using (Stream dataStream = response.GetResponseStream())
+                {
+                    StreamReader reader = new StreamReader(dataStream);
+                    web_response = reader.ReadToEnd();
+                }
+                response.Close();
+            }
+            catch (WebException e)
+            {
+                //# Print("Method :: sendRequest :: Exception: " + e.Message + "; ServerResponse: " + e.Response, true, true);
+                string lError = new StreamReader(e.Response.GetResponseStream()).ReadToEnd();
+                return lError;
+            }
+            return web_response;
         }
     }
 }

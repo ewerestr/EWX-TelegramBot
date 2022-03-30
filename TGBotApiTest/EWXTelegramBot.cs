@@ -141,6 +141,22 @@ namespace me.ewerestr.ewxtelegrambot
 			return sb.ToString();
 		}
 
+		public static string ParseTags(string path)
+        {
+			string artist = null;
+			string title = null;
+			TagLib.File tag = TagLib.File.Create(path);
+			if (tag != null)
+            {
+				if (tag.Tag.FirstAlbumArtist != null) artist = tag.Tag.FirstAlbumArtist;
+				else if (tag.Tag.FirstArtist != null) artist = tag.Tag.FirstArtist;
+				else if (tag.Tag.FirstPerformer != null) artist = tag.Tag.FirstPerformer;
+				if (tag.Tag.Title != null) title = tag.Tag.Title;
+				return artist + " - " + title;
+			}
+			return Path.GetFileName(path).Replace(".mp3", "").Replace(".MP3", "").Replace(".Mp3", "").Replace(".mP3", "").Replace("_", " ");
+		}
+
 		public static void StopAll()
         {
 			try
@@ -229,6 +245,12 @@ namespace me.ewerestr.ewxtelegrambot
 			nextPostDate = nextPostDate.AddDays(interval[0]).AddHours(interval[1]).AddMinutes(interval[2]).AddSeconds(interval[3]);
 			_controller._nextPostDate = new int[] {nextPostDate.Year, nextPostDate.Month, nextPostDate.Day, nextPostDate.Hour, nextPostDate.Minute, nextPostDate.Second};
 			StartTimer(nextPostDate);
+        }
+
+		public static void StopTimer()
+        {
+			if (_timer != null) _timer.Dispose();
+			if (_timerCallback != null) _timerCallback = null;
         }
 
 		public static int[] ParseCooldown(string value)
@@ -378,6 +400,11 @@ namespace me.ewerestr.ewxtelegrambot
 		{
 			return _telegramApi;
 		}
+
+		public static EWXLogger GetLogger()
+        {
+			return _logger;
+        }
 
 		public static void SetDebugStatus(bool debug)
         {
