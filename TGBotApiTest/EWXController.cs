@@ -1,5 +1,4 @@
-﻿using Id3;
-using me.ewerestr.ewxtelegrambot.Responses;
+﻿using me.ewerestr.ewxtelegrambot.Responses;
 using me.ewerestr.ewxtelegrambot.Utils;
 using System;
 using System.Collections.Generic;

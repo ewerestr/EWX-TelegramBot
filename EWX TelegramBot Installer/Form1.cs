@@ -157,6 +157,7 @@ namespace EWX_TelegramBot_Installer
             Update();
             Thread.Sleep(1000);
             installingProgressBar.Value = 100;
+            
             Update();
             Thread.Sleep(3000);
             currentState += 1;
